@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.20.1 — `<b>` was showing up in exported PNGs
+
+The live preview renders labels with `htmlLabels` on, so inline HTML like `<b>` and `<i>` becomes
+real bold and italics. Exports re-render with `htmlLabels` off to keep the SVG canvas-safe — and in
+that mode Mermaid only understands `<br>`; every other inline tag was drawn into the exported image
+as literal text, tags and all.
+
+- **Fix**: the export path (PNG and SVG alike) now strips inline HTML tags (`<b>`, `<i>`,
+  `<span style=…>`, …) from the source before rendering. Label text and `<br>` line breaks survive;
+  the preview keeps its real bold. (lib 0.28.1)
+
 ## 0.20.0 — ORID, a diagram type Mermaid doesn't have
 
 Every retrospective and incident review has the same shape, and Mermaid has no diagram for it — so

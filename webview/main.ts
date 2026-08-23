@@ -1,6 +1,6 @@
 import mermaid from 'mermaid';
 import svgPanZoom from 'svg-pan-zoom';
-import { transpileOrid } from 'react-super-mermaid/orid';
+import { stripHtmlFormattingTags, transpileOrid } from 'react-super-mermaid/orid';
 import { boostLegibility, colorizeDiagram, enhanceContrast, ensureLegibilityStyles } from './colorize';
 import { attachNodeTips, parseTipDirectives, type TipContent, type TipEntry } from './nodeTip';
 
@@ -983,7 +983,10 @@ async function renderPristineSvg(
       htmlLabels: false,
       flowchart: { ...(config.flowchart ?? {}), htmlLabels: false },
     });
-    return { svg: (await mermaid.render(id, transpileOrid(source))).svg };
+    // With htmlLabels off, mermaid draws labels as plain SVG <text>: only <br>
+    // is understood, every other inline tag (<b>, <i>, …) would be rendered as
+    // literal text in the exported image — strip them before rendering.
+    return { svg: (await mermaid.render(id, stripHtmlFormattingTags(transpileOrid(source)))).svg };
   } catch (err) {
     document.getElementById('d' + id)?.remove();
     const message = err instanceof Error ? err.message : String(err);

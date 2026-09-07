@@ -21,6 +21,26 @@ function decodeExportData(format: ExportFormat, data: string): Buffer {
     : Buffer.from(data.replace(/^data:image\/[a-z.+-]+;base64,/, ''), 'base64');
 }
 
+/**
+ * One canvas shortcut, as `contributes.keybindings` spells it in `args`.
+ *
+ * `key` is the DOM `KeyboardEvent.key` the drawing library listens for
+ * ('Delete', 'ArrowUp', '?', 'z'), not VS Code's own key syntax.
+ */
+export interface KeyStroke {
+  key: string;
+  ctrl?: boolean;
+  shift?: boolean;
+}
+
+/** A keybinding's `args`, which reach a command handler as plain unknown JSON. */
+export function asKeyStroke(args: unknown): KeyStroke | undefined {
+  if (typeof args !== 'object' || args === null) return undefined;
+  const { key, ctrl, shift } = args as Record<string, unknown>;
+  if (typeof key !== 'string' || key === '') return undefined;
+  return { key, ctrl: ctrl === true, shift: shift === true };
+}
+
 type InMessage =
   | { type: 'ready' }
   | { type: 'mermaidchange'; text: string }
@@ -190,6 +210,20 @@ export class EditorPanel {
     } finally {
       this.applyingEdit = false;
     }
+  }
+
+  /**
+   * Hand a canvas shortcut to the webview.
+   *
+   * Keys only reach a webview while VS Code considers the webview focused, and
+   * the panel can be the active tab with the focus still parked in the
+   * workbench — so the canvas shortcuts are also contributed as real
+   * keybindings (`when: activeWebviewPanelId == superMermaidEditor`) and come
+   * through here. The webview drops a stroke it already saw as a keystroke, so
+   * the two routes never both fire.
+   */
+  public sendKey(stroke: KeyStroke): void {
+    void this.panel.webview.postMessage({ type: 'key', stroke });
   }
 
   /** 介面語言改變:工具列字串是 host 產生的,只能整份 HTML 重建

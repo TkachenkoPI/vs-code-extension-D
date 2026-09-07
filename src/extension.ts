@@ -4,7 +4,7 @@ import { MermaidCodeLensProvider } from './codeLensProvider';
 import { MermaidCompletionProvider } from './completionProvider';
 import { MermaidHoverProvider } from './hoverProvider';
 import { MermaidDiagnostics } from './diagnostics';
-import { EditorPanel } from './editorPanel';
+import { asKeyStroke, EditorPanel } from './editorPanel';
 import { registerInsertTemplateCommand } from './insertTemplate';
 import { isMarkdownDoc, MarkdownPreviewPanel } from './markdownPreviewPanel';
 import { extractMermaidBlocks, isSupportedDoc } from './mermaidExtract';
@@ -128,6 +128,15 @@ export function activate(context: vscode.ExtensionContext): void {
         await EditorPanel.createOrShow(context, doc, blockIndex ?? 0);
       },
     ),
+    // Canvas shortcuts as real keybindings, scoped to the drawing panel.
+    // Inside a webview a keystroke only reaches the page while VS Code considers
+    // the webview focused — the panel can be the active tab with the focus still
+    // in the workbench — so every shortcut is contributed here as well and
+    // forwarded in. The webview ignores a stroke it already saw itself.
+    vscode.commands.registerCommand('superMermaid.editorKey', (args: unknown) => {
+      const stroke = asKeyStroke(args);
+      if (stroke) EditorPanel.current?.sendKey(stroke);
+    }),
     vscode.commands.registerCommand('superMermaid.openToSide', async (uri?: vscode.Uri) => {
       // Invoked from the explorer context menu with a file URI, or from the
       // editor title / context menu / command palette without arguments.

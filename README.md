@@ -140,6 +140,8 @@ On many of the newer types, dragging *means* something rather than just tidying 
 
 Start from a **template** on the empty canvas (all twenty-one types are one click away) and press **`?`** for the keyboard-shortcut overlay. The editor's colours match the live preview exactly — including `classDef`/`style`/`linkStyle` colours, generics, abstract/static members, ER crow's-foot and markdown labels — and everything writes straight back to your file as clean Mermaid (round-trip stable). Anything the editor doesn't fully understand — an unusual gantt `dateFormat`, a nested `block:… end` — is passed through **verbatim** and marked read-only rather than half-rewritten.
 
+
+The canvas shortcuts (`Delete`, `?`, `Ctrl+Z` / `Ctrl+Y`, `Ctrl+A` / `Ctrl+D` / `Ctrl+G`, the arrow-key nudges, `V` / `N` / `E`) work whenever the drawing panel is the active tab — they are contributed as ordinary VS Code keybindings, so **File → Preferences → Keyboard Shortcuts** can rebind them: search for `superMermaid.editorKey` and edit the `args` of the entry you want. `Tab` and `Esc` are left to VS Code and act on the canvas once it has the focus.
 ![Draw diagrams visually](docs/images/draw-editor.png)
 
 ## 🧭 New: ORID — a diagram type Mermaid doesn't have

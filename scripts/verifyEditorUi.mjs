@@ -579,7 +579,9 @@ try {
   //   * 快捷鍵:lib 把 keydown 綁在畫布 host 上,誰都沒有把焦點給它 —— 剛開面板時焦點在
   //     <body>,而且點過任何工具列按鈕之後焦點就停在那顆按鈕上,快捷鍵整組失效。
   {
-    const source = 'flowchart TD\n  A[開始] --> B{判斷}\n  B --> C[結束]\n';
+    // 節點多備幾個:這個案例會連刪三次(選單、快捷鍵、host 送進來的),刪光了就沒東西可測。
+    const source =
+      'flowchart TD\n  A[開始] --> B{判斷}\n  B --> C[處理]\n  C --> D[驗證]\n  D --> E[結束]\n';
     await page.goto(`http://127.0.0.1:${port}/.verify-ui/index.html`, { waitUntil: 'load' });
     await page.evaluate(({ src, dark }) => window.postMessage({ type: 'load', source: src, dark }, '*'), {
       src: source,
@@ -631,6 +633,41 @@ try {
     await new Promise((ok) => setTimeout(ok, 300));
     const help = await page.evaluate(() => Boolean(document.querySelector('#app .rsm-help-overlay')));
     if (!help) problems.push('焦點在工具列時 ? 叫不出快捷鍵說明');
+
+    // 3) host 的 keybinding 路線:webview 完全沒收到按鍵,只收到 postMessage 也要作用。
+    //    (VS Code 只在它認為 webview 有焦點時才把按鍵送進頁面;面板是作用中分頁、焦點卻在
+    //     工作台時,這條路線是唯一能到畫布的路。)
+    // 說明浮層還蓋在畫布上,先收掉 —— 不然接下來的點擊都會落在浮層上。
+    await page.keyboard.press('Escape');
+    await new Promise((ok) => setTimeout(ok, 250));
+    if (await page.evaluate(() => Boolean(document.querySelector('#app .rsm-help-overlay')))) {
+      problems.push('Escape 關不掉快捷鍵說明浮層');
+    }
+
+    const pick2 = await nodeCenter();
+    await page.mouse.click(pick2.x, pick2.y);
+    await new Promise((ok) => setTimeout(ok, 500)); // 過掉去重的寬限期
+    const beforeHost = await nodeCount();
+    await page.evaluate(() => window.postMessage({ type: 'key', stroke: { key: 'Delete' } }, '*'));
+    await new Promise((ok) => setTimeout(ok, 400));
+    const afterHost = await nodeCount();
+    if (afterHost !== beforeHost - 1) problems.push(`host 送進來的 Delete 沒作用(${beforeHost} → ${afterHost})`);
+
+    // 4) 同一次按鍵不能做兩遍:頁面自己收到過的按鍵,host 再送同一顆就要被丟掉。
+    const pick3 = await nodeCenter();
+    await page.mouse.click(pick3.x, pick3.y);
+    await new Promise((ok) => setTimeout(ok, 500));
+    const beforeDup = await nodeCount();
+    await page.keyboard.down('Control');
+    await page.keyboard.press('KeyD');
+    await page.keyboard.up('Control');
+    await new Promise((ok) => setTimeout(ok, 300));
+    const afterDup = await nodeCount();
+    await page.evaluate(() => window.postMessage({ type: 'key', stroke: { key: 'd', ctrl: true } }, '*'));
+    await new Promise((ok) => setTimeout(ok, 400));
+    const afterEcho = await nodeCount();
+    if (afterDup !== beforeDup + 1) problems.push(`Ctrl+D 沒複製(${beforeDup} → ${afterDup})`);
+    else if (afterEcho !== afterDup) problems.push(`同一顆 Ctrl+D 做了兩遍(${afterDup} → ${afterEcho})`);
 
     dragResults.push({ name: '右鍵選單指令 + 工具列焦點快捷鍵', busy: 1, problems });
   }

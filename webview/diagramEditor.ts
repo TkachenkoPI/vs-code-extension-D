@@ -167,6 +167,7 @@ function forwardHotkeys(host: HTMLElement): void {
   window.addEventListener(
     'keydown',
     (e) => {
+      seenInPage.set(strokeSig(e.key, e.ctrlKey || e.metaKey, e.shiftKey), Date.now());
       const target = e.target instanceof HTMLElement ? e.target : null;
       if (target && (host.contains(target) || isTypingTarget(target))) return;
       const replay = new KeyboardEvent('keydown', {
@@ -183,6 +184,53 @@ function forwardHotkeys(host: HTMLElement): void {
       if (!host.dispatchEvent(replay)) e.preventDefault();
     },
     true,
+  );
+}
+
+/** A shortcut as the host sends it (mirrors `contributes.keybindings`' args). */
+interface Stroke {
+  key: string;
+  ctrl?: boolean;
+  shift?: boolean;
+}
+
+function strokeSig(key: string, ctrl: boolean, shift: boolean): string {
+  return `${ctrl ? 'c' : ''}${shift ? 's' : ''}${key.toLowerCase()}`;
+}
+
+/**
+ * When each shortcut last arrived as a real keystroke in this page.
+ *
+ * The host route below fires for the *same* physical keypress, just later (page
+ * keydown → VS Code keybinding → command → postMessage), so a stroke recorded
+ * here means the canvas already had its chance — including the case where the
+ * chance was "a textarea has the focus, so the canvas must stay out of it".
+ */
+const seenInPage = new Map<string, number>();
+const HOST_KEY_GRACE_MS = 400;
+
+/**
+ * Run a shortcut that came from a VS Code keybinding.
+ *
+ * Keys only reach a webview when VS Code considers the webview focused, and a
+ * panel can be the active tab with the focus still parked in the workbench — so
+ * a page-only listener can never be the whole answer. The panel therefore also
+ * contributes real keybindings scoped to `activeWebviewPanelId`, and each one
+ * lands here to be replayed on the canvas host, which keeps the library's own
+ * handler as the single implementation of every shortcut.
+ */
+function applyHostKey(host: HTMLElement, stroke: Stroke): void {
+  const sig = strokeSig(stroke.key, Boolean(stroke.ctrl), Boolean(stroke.shift));
+  const seen = seenInPage.get(sig) ?? 0;
+  if (Date.now() - seen < HOST_KEY_GRACE_MS) return; // the page already handled it
+  host.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: stroke.key,
+      ctrlKey: Boolean(stroke.ctrl),
+      shiftKey: Boolean(stroke.shift),
+      bubbles: false,
+      cancelable: true,
+    }),
   );
 }
 
@@ -582,6 +630,7 @@ window.addEventListener('message', (event) => {
     dark?: boolean;
     blocks?: Array<{ index: number; label: string }>;
     activeIndex?: number;
+    stroke?: Stroke;
   };
   if (msg.type === 'load') {
     populateDiagramSelect(msg.blocks, msg.activeIndex);
@@ -621,6 +670,9 @@ window.addEventListener('message', (event) => {
       });
   } else if (msg.type === 'theme') {
     handle?.setDark(Boolean(msg.dark));
+  } else if (msg.type === 'key' && msg.stroke) {
+    // 工具列與畫布之外的焦點:快捷鍵由 host 的 keybinding 送進來(見 applyHostKey)。
+    applyHostKey(app, msg.stroke);
   }
 });
 

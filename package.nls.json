@@ -9,6 +9,7 @@
   "command.insertTemplate.title": "Super Mermaid: Insert Diagram Template",
   "command.openMarkdownPreview.title": "Super Mermaid: Open Markdown Preview to the Side",
   "command.openMarkdownPreviewInNewWindow.title": "Super Mermaid: Open Markdown Preview in New Window",
+  "command.editorKey.title": "Send a keyboard shortcut to the drawing canvas",
 
   "configuration.title": "Super Mermaid",
   "configuration.language.description": "Language of Super Mermaid's own interface (the drawing editor toolbar, previews and messages). `auto` follows the VS Code display language. Command titles and this settings page always follow VS Code itself.",

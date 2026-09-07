@@ -9,6 +9,7 @@
   "command.insertTemplate.title": "Super Mermaid: вставить шаблон диаграммы",
   "command.openMarkdownPreview.title": "Super Mermaid: открыть предпросмотр Markdown сбоку",
   "command.openMarkdownPreviewInNewWindow.title": "Super Mermaid: открыть предпросмотр Markdown в отдельном окне",
+  "command.editorKey.title": "Отправить сочетание клавиш на холст рисования",
 
   "configuration.title": "Super Mermaid",
   "configuration.language.description": "Язык собственного интерфейса Super Mermaid (панель инструментов визуального редактора, предпросмотры, сообщения). `auto` — язык интерфейса VS Code. Названия команд и эта страница настроек всегда следуют за самим VS Code.",

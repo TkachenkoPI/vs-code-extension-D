@@ -9,6 +9,7 @@
   "command.insertTemplate.title": "Super Mermaid: 插入圖表範本",
   "command.openMarkdownPreview.title": "Super Mermaid: 在側邊開啟 Markdown 預覽",
   "command.openMarkdownPreviewInNewWindow.title": "Super Mermaid: 在新視窗開啟 Markdown 預覽",
+  "command.editorKey.title": "把快捷鍵送到繪製畫布",
 
   "configuration.title": "Super Mermaid",
   "configuration.language.description": "Super Mermaid 自身介面的語言(繪製編輯器工具列、預覽、訊息)。`auto` 表示跟隨 VS Code 的顯示語言。命令名稱與這個設定頁本身一律跟隨 VS Code。",

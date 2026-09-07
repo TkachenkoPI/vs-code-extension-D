@@ -94,6 +94,211 @@
         "command": "superMermaid.openMarkdownPreviewInNewWindow",
         "title": "%command.openMarkdownPreviewInNewWindow.title%",
         "icon": "$(multiple-windows)"
+      },
+      {
+        "command": "superMermaid.editorKey",
+        "title": "%command.editorKey.title%",
+        "category": "%command.category%"
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "delete",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "Delete"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "backspace",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "Backspace"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "shift+/",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "?",
+          "shift": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "ctrl+z",
+        "mac": "cmd+z",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "z",
+          "ctrl": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "ctrl+y",
+        "mac": "cmd+y",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "y",
+          "ctrl": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "ctrl+shift+z",
+        "mac": "cmd+shift+z",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "z",
+          "ctrl": true,
+          "shift": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "ctrl+a",
+        "mac": "cmd+a",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "a",
+          "ctrl": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "ctrl+d",
+        "mac": "cmd+d",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "d",
+          "ctrl": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "ctrl+g",
+        "mac": "cmd+g",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "g",
+          "ctrl": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "ctrl+c",
+        "mac": "cmd+c",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "c",
+          "ctrl": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "ctrl+v",
+        "mac": "cmd+v",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "v",
+          "ctrl": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "up",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "ArrowUp"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "shift+up",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "ArrowUp",
+          "shift": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "down",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "ArrowDown"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "shift+down",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "ArrowDown",
+          "shift": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "left",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "ArrowLeft"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "shift+left",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "ArrowLeft",
+          "shift": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "right",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "ArrowRight"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "shift+right",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "ArrowRight",
+          "shift": true
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "v",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "v"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "n",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "n"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
+      },
+      {
+        "key": "e",
+        "command": "superMermaid.editorKey",
+        "args": {
+          "key": "e"
+        },
+        "when": "activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus && !listFocus"
       }
     ],
     "configuration": {
@@ -204,6 +409,10 @@
         },
         {
           "command": "superMermaid.insertTemplate"
+        },
+        {
+          "command": "superMermaid.editorKey",
+          "when": "false"
         }
       ]
     }

@@ -22,9 +22,22 @@ test that drives the editor through its API rather than through a real mouse and
   reach the canvas. What no webview code can fix is a keystroke that never arrives — VS Code hands
   keys to whatever *it* considers focused, so the panel still needs one click (or to be the active
   tab) before it hears anything at all.
-- **New**: `npm run verify:ui` case *右鍵選單指令 + 工具列焦點快捷鍵* — right-clicks a node, clicks
-  the menu's last item, then selects a node, clicks a toolbar button and presses Delete and `?`. All
-  three symptoms fail this case without the fix.
+- **New**: the canvas shortcuts are contributed as real VS Code keybindings too, scoped to the panel
+  (`when: activeWebviewPanelId == 'superMermaidEditor' && !inputFocus && !terminalFocus &&
+  !listFocus`) and forwarded into the webview by `superMermaid.editorKey`. This is the part a page
+  listener cannot cover: a keystroke only reaches a webview while VS Code considers the webview
+  focused, so with the panel as the active tab but the focus parked in the workbench, nothing arrived
+  at all. Delete / Backspace, `?`, Ctrl+Z / Y / Shift+Z, Ctrl+A / D / G / C / V, the arrow nudges
+  (plain and with Shift) and V / N / E now work whenever the panel is the active tab. Tab and Escape
+  are deliberately left to VS Code and keep working the moment the canvas has the focus.
+- **New**: the webview drops a forwarded stroke it has already seen as a real keystroke within
+  400 ms, so the two routes never both fire — no double undo, no node duplicated twice, and nothing
+  stolen from a textarea inside the panel.
+- **New**: `npm run verify:ui` case *右鍵選單指令 + 工具列焦點快捷鍵*, driven with a real mouse and
+  keyboard — right-clicks a node and clicks the menu's last item; selects a node, clicks a toolbar
+  button and presses Delete and `?`; posts a stroke the way the host does with no keystroke at all;
+  and presses Ctrl+D for real before echoing the same stroke from the host, which must not duplicate
+  twice. Every symptom above fails this case without its fix.
 
 ## Unreleased — Traditional Chinese is back
 

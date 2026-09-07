@@ -26,6 +26,7 @@ export const UI_LANGUAGES: ReadonlyArray<{ value: string; label: string }> = [
   { value: 'auto', label: '' }, // label comes from the translated "Auto"
   { value: 'en', label: 'English' },
   { value: 'ru', label: 'Русский' },
+  { value: 'zh-tw', label: '繁體中文' },
 ];
 
 function languageOptions(t: Translate, current: string): string {

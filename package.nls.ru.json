@@ -15,6 +15,7 @@
   "configuration.language.auto": "Следовать языку интерфейса VS Code",
   "configuration.language.en": "Английский (English)",
   "configuration.language.ru": "Русский",
+  "configuration.language.zh-tw": "Китайский традиционный (繁體中文)",
   "configuration.previewLocation.description": "Где открывать предпросмотр Mermaid. `beside` — рядом с редактором, в соседней области (как встроенный предпросмотр Markdown); `newWindow` — в отдельном плавающем окне.",
   "configuration.previewLocation.newWindow": "Открывать предпросмотр в отдельном плавающем окне",
   "configuration.previewLocation.beside": "Открывать предпросмотр рядом с редактором (разделённая область)"

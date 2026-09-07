@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased — Traditional Chinese is back
+
+This fork's upstream is a zh-TW project, and the Russian localization replaced its Chinese UI
+strings with English source strings without putting the Chinese back as a bundle. A zh-TW user of
+the upstream extension therefore lost their language. Now it is a full bundle again, and one of the
+choices in the toolbar's language picker.
+
+- **New**: `l10n/bundle.l10n.zh-tw.json` (all 268 host strings), `package.nls.zh-tw.json` for the
+  manifest, and a zh-TW dictionary in `webview/i18n.ts`. Wherever the pre-i18n code had a Chinese
+  string, that exact wording is restored — toolbar tooltips, arrow names, template descriptions, the
+  copy-button states.
+- **New**: the strings the drawing library renders itself (help overlay, context menu, shape
+  captions) are not re-translated. `LIB_ZH_EN` already maps the library's zh-TW to English, so the
+  zh-TW dictionary is that table read backwards: `{...libZhTw(), ...ZH_TW_OWN}`. One table, and the
+  menu reads exactly as upstream prints it. The toolbar's shape captions were aligned to the same
+  words (方框, 圓角, 六角…) so both places name a shape the same way.
+- **Change**: `npm run check:l10n` now checks **every** `l10n/bundle.l10n.*.json`, not just the
+  Russian one, and checks the webview dictionaries too — each language must carry the same keys as
+  the reference dictionary, with `LIB_ZH_EN`'s English values counting as coverage.
+- Simplified Chinese is deliberately absent: `zh-cn` falls back to English rather than being shown
+  Traditional forms. Template *bodies* stay English for zh-TW — upstream's bodies were English too;
+  only Russian has translated bodies (`src/templatesRu.ts`).
+
 ## Unreleased — pick the interface language in the toolbar
 
 The extension spoke whatever language VS Code's **Display Language** was set to, and nothing else.
@@ -7,8 +30,8 @@ That is the wrong granularity for a diagram tool: people run an English VS Code 
 drawing editor in Russian (and the other way round), and switching VS Code's display language means
 a restart of the whole editor.
 
-- **New**: a 🌐 dropdown at the right of the drawing editor's toolbar — **Auto / English / Русский**
-  — backed by the `superMermaid.language` setting (`auto` = follow VS Code, the default). Changing
+- **New**: a 🌐 dropdown at the right of the drawing editor's toolbar — **Auto / English / Русский /
+  繁體中文** — backed by the `superMermaid.language` setting (`auto` = follow VS Code, the default). Changing
   it takes effect at once: the drawing editor, the diagram preview and the Markdown preview rebuild
   their HTML (the toolbar strings are host-generated, so a rebuild is the only way), and the CodeLens
   titles and status bar re-render.

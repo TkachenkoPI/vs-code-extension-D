@@ -322,7 +322,75 @@ const LIB_ZH_EN: Dict = {
   原樣保留: 'kept as-is',
 };
 
-const DICTS: Record<string, Dict> = { ru: RU };
+/**
+ * Traditional Chinese — the extension's own strings.
+ *
+ * Everything the library renders itself is NOT listed here: those come from
+ * LIB_ZH_EN read backwards (see ZH_TW below), so the help overlay and the
+ * context menu keep the exact wording upstream ships, down to the punctuation.
+ * Strings that existed in the pre-i18n zh-TW code are copied from it verbatim.
+ */
+const ZH_TW_OWN: Dict = {
+  // ── diagram preview (webview/main.ts) ──────────────────────────────────
+  'Rendering…': '繪製中…',
+  'Mermaid syntax error': 'Mermaid 語法錯誤',
+  'This diagram type cannot be rasterized — exported SVG instead':
+    '此圖種無法轉成點陣圖 —— 已改匯出 SVG',
+  'JPEG has no transparency — background kept': 'JPEG 不支援透明 —— 已保留背景',
+  'This diagram type cannot be rasterized — copied SVG markup instead':
+    '此圖種無法轉成點陣圖 —— 已改複製 SVG 原始碼',
+  'Image copied ({0}x)': '已複製圖片({0}x)',
+  'Exporting {0}/{1}…': '匯出中 {0}/{1}…',
+  'Unlock — follow active editor': '解除鎖定 —— 跟隨作用中的編輯器',
+  'Lock to current file': '鎖定到目前檔案',
+  'Locked to current file': '已鎖定到目前檔案',
+  'Following the active editor': '正在跟隨作用中的編輯器',
+
+  // ── markdown document preview (webview/markdownDocument.ts) ────────────
+  Outline: '大綱',
+  'No headings': '沒有標題',
+  'No results': '沒有相符結果',
+  Auto: '自動',
+  Full: '滿版',
+  Reading: '閱讀',
+  'Content width: {0} — click / press w to cycle': '內容寬度:{0} —— 點擊或按 w 循環切換',
+  '(Auto fits the window, Full = 100%, Reading = 920px)':
+    '(「自動」符合視窗、「滿版」= 100%、「閱讀」= 920px)',
+  'Canvas 2D context unavailable.': '無法取得 Canvas 2D 繪圖環境。',
+
+  // ── drawing editor (webview/diagramEditor.ts) ──────────────────────────
+  '⎯ no arrow': '⎯ 無箭頭',
+  '▸ arrow': '▸ 箭頭',
+  '⇁ open': '⇁ 開放',
+  '● dot': '● 圓點',
+  '✕ cross': '✕ 交叉',
+  '▷ triangle (inheritance)': '▷ 三角(繼承)',
+  '◇ hollow diamond (aggregation)': '◇ 空心菱(聚合)',
+  '◆ filled diamond (composition)': '◆ 實心菱(組合)',
+  '⊣ one': '⊣ 一',
+  '⪛ many': '⪛ 多',
+  '＋ more shapes…': '＋ 更多外形…',
+  'Add a {0} node': '新增{0}節點',
+  '✓ copied': '✓ 已複製',
+  '⧉ copy': '⧉ 複製',
+  '✗ unsupported': '✗ 不支援',
+};
+
+/** LIB_ZH_EN read backwards: English key → the zh-TW the library itself prints. */
+function libZhTw(): Dict {
+  const out: Dict = {};
+  for (const [zh, en] of Object.entries(LIB_ZH_EN)) {
+    out[en] = zh;
+  }
+  return out;
+}
+
+const ZH_TW: Dict = { ...libZhTw(), ...ZH_TW_OWN };
+
+// Keys are VS Code display-language tags, lower-cased. Simplified Chinese
+// ("zh-cn") is deliberately absent: these are Traditional forms, and English is
+// a better answer for a 简体 reader than 繁體 would be.
+const DICTS: Record<string, Dict> = { ru: RU, 'zh-tw': ZH_TW };
 
 let dict: Dict = {};
 

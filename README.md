@@ -188,9 +188,9 @@ Right-click any `.md` file (in the editor or the Explorer) → **Open Markdown P
 
 ## Languages
 
-The UI follows VS Code's **Display Language**: English by default, Russian when VS Code itself runs in Russian (`Ctrl+Shift+P` → **Configure Display Language**). Commands, panels, tooltips and notifications are all covered.
+The UI follows VS Code's **Display Language**: English by default, Russian or Traditional Chinese when VS Code itself runs in one of those (`Ctrl+Shift+P` → **Configure Display Language**). Commands, panels, tooltips and notifications are all covered. 繁體中文 is the language this extension was originally written in, so where the upstream project had a string, its original wording is what you get back — including the help overlay and context menu the drawing library renders itself. Simplified Chinese has no bundle; a `zh-cn` VS Code gets English.
 
-You can also pick the language for this extension alone, without restarting VS Code or changing its display language: the 🌐 dropdown at the right of the drawing editor's toolbar (**Auto / English / Русский**), or the `superMermaid.language` setting. It applies immediately to the drawing editor, both previews, the CodeLens titles and the status bar. Command titles in the palette and the settings page itself are owned by VS Code and keep following its display language.
+You can also pick the language for this extension alone, without restarting VS Code or changing its display language: the 🌐 dropdown at the right of the drawing editor's toolbar (**Auto / English / Русский / 繁體中文**), or the `superMermaid.language` setting. It applies immediately to the drawing editor, both previews, the CodeLens titles and the status bar. Command titles in the palette and the settings page itself are owned by VS Code and keep following its display language.
 
 One exception: the `mmd-*` **snippets**. `contributes.snippets` takes a single fixed path with no locale switch, so the shipped snippet file is generated in one language — Russian in this build (`npm run gen:snippets` with `SNIPPET_LOCALE=en` regenerates the English set). The **Insert Diagram Template** command is not affected: it goes through `vscode.l10n` and follows the editor's language at runtime.
 

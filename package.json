@@ -104,12 +104,14 @@
           "enum": [
             "auto",
             "en",
-            "ru"
+            "ru",
+            "zh-tw"
           ],
           "enumDescriptions": [
             "%configuration.language.auto%",
             "%configuration.language.en%",
-            "%configuration.language.ru%"
+            "%configuration.language.ru%",
+            "%configuration.language.zh-tw%"
           ],
           "default": "auto",
           "markdownDescription": "%configuration.language.description%"

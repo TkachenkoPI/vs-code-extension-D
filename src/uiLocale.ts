@@ -18,11 +18,13 @@
 
 import * as vscode from 'vscode';
 import ruBundle from '../l10n/bundle.l10n.ru.json';
+import zhTwBundle from '../l10n/bundle.l10n.zh-tw.json';
 
-export type UiLanguage = 'auto' | 'en' | 'ru';
+export type UiLanguage = 'auto' | 'en' | 'ru' | 'zh-tw';
 
 const BUNDLES: Record<string, Record<string, string>> = {
   ru: ruBundle as Record<string, string>,
+  'zh-tw': zhTwBundle as Record<string, string>,
 };
 
 type TArg = string | number | boolean;
@@ -31,7 +33,7 @@ type TArgs = TArg[] | Record<string, TArg>;
 /** The `superMermaid.language` setting, normalised. */
 export function configuredLanguage(): UiLanguage {
   const value = vscode.workspace.getConfiguration('superMermaid').get<string>('language', 'auto');
-  return value === 'en' || value === 'ru' ? value : 'auto';
+  return value === 'en' || value === 'ru' || value === 'zh-tw' ? value : 'auto';
 }
 
 /** Write the setting (globally — a UI language is a per-user, not per-folder, choice). */

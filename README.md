@@ -7,6 +7,42 @@
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/mark-ku.super-mermaid)](https://marketplace.visualstudio.com/items?itemName=mark-ku.super-mermaid&ssr=false#review-details)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+## Кратко по-русски
+
+**Super Mermaid** — расширение VS Code для диаграмм [Mermaid](https://mermaid.js.org/): живой предпросмотр рядом с кодом, готовая яркая тема без единой настройки, экспорт в PNG/SVG и визуальный редактор «нарисуй мышью — получи Mermaid» для всех типов диаграмм (плюс собственный тип ORID). Движок mermaid встроен в расширение, поэтому отрисовка работает полностью офлайн.
+
+Эта сборка — форк с русской локализацией: команды, панели, подсказки и уведомления переведены и следуют настройке **Display Language** самого VS Code. Подробности — в [README.ru.md](README.ru.md).
+
+### Как подключить к VS Code
+
+Форк не публикуется в Marketplace, поэтому расширение собирается локально и ставится из `.vsix`.
+
+1. Установите [Node.js 18+](https://nodejs.org/) и убедитесь, что в PATH есть команда `code` (в VS Code: `Ctrl+Shift+P` → **Shell Command: Install 'code' command in PATH**).
+2. Склонируйте репозиторий и поставьте зависимости:
+
+   ```bash
+   git clone https://github.com/TkachenkoPI/vs-code-extension-D.git
+   cd vs-code-extension-D
+   npm install
+   ```
+
+3. Соберите и установите расширение одной командой (PowerShell, Windows):
+
+   ```powershell
+   .\pack.ps1
+   ```
+
+   Скрипт делает сборку, собирает `super-mermaid-<версия>.vsix` и ставит его через `code --install-extension`. Ключ `-PackageOnly` — только собрать `.vsix`, без установки; `-Bump` — заодно поднять patch-версию.
+
+   Без PowerShell: `npm run build && npm run package`, затем `code --install-extension super-mermaid-<версия>.vsix`. Тот же `.vsix` можно поставить руками: панель расширений (`Ctrl+Shift+X`) → «…» → **Install from VSIX…**.
+
+4. Выполните `Ctrl+Shift+P` → **Developer: Reload Window**, чтобы новая версия подхватилась.
+5. Откройте файл `.md` с блоком ```` ```mermaid ```` либо файл `.mmd` / `.mermaid` и нажмите значок предпросмотра в правом верхнем углу редактора. Настраивать больше нечего.
+
+Русский интерфейс включится, если язык самого VS Code — русский: `Ctrl+Shift+P` → **Configure Display Language** → `ru`.
+
+---
+
 > **Mermaid diagrams that look good the moment you open them.** No theming, no config — every diagram comes out colored, rounded, and softly shadowed, ready to drop straight into slides, docs, or a PR. It updates live as you type, exports razor-sharp PNG/SVG, and runs **100% offline**.
 
 ![Preview panel](docs/images/preview-panel.png)

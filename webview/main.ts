@@ -1,8 +1,9 @@
 import mermaid from 'mermaid';
 import svgPanZoom from 'svg-pan-zoom';
-import { stripHtmlFormattingTags, transpileOrid } from 'react-super-mermaid/orid';
+import { transpileOrid } from 'react-super-mermaid/orid';
 import { boostLegibility, colorizeDiagram, enhanceContrast, ensureLegibilityStyles } from './colorize';
 import { initI18nFromDocument, t } from './i18n';
+import { stripHtmlFormattingTags } from './stripHtmlTags';
 import { attachNodeTips, parseTipDirectives, type TipContent, type TipEntry } from './nodeTip';
 
 // Must run before any string is rendered: picks the dictionary matching the

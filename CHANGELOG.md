@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — a clean clone builds again
+
+`webview/main.ts` imported `stripHtmlFormattingTags` from `react-super-mermaid/orid`, which only
+exists in the library's unpublished 0.28.1 — npm still serves 0.28.0, so `npm install` + `npm run
+build` failed on `tsc` for anyone without the library's sources checked out next door.
+
+- **Fix**: the helper now lives in `webview/stripHtmlTags.ts`. Same behaviour (inline formatting
+  tags dropped from the export render, `<br>` and label text kept), no dependency on an unpublished
+  version — clone, `npm install`, `.\pack.ps1` works unattended. Revert to the library import once
+  0.28.1 is on npm.
+- **Fix**: `pack.ps1` installs with `code --install-extension --force`; without it the CLI treats an
+  unchanged version number as "already installed" and silently skips the reinstall.
+
 ## Unreleased — Russian localization
 
 The UI was a mix of English and Traditional Chinese, and neither followed the editor's display

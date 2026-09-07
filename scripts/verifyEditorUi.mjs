@@ -572,6 +572,68 @@ try {
     if (left !== at.count - 1) problems.push(`Delete 沒刪掉(${at.count} → ${left})`);
     dragResults.push({ name: 'sequence 點選 + Delete', busy: selBoxes, problems });
   }
+
+  // ── 右鍵選單 + 焦點不在畫布上的快捷鍵 ──
+  // 兩者都壞過一輪,而且都只在「真的用滑鼠 / 鍵盤操作」時才看得出來:
+  //   * 選單指令:lib 在 document 的 pointerdown 就把選單移除,click 因此永遠派不到項目上。
+  //   * 快捷鍵:lib 把 keydown 綁在畫布 host 上,誰都沒有把焦點給它 —— 剛開面板時焦點在
+  //     <body>,而且點過任何工具列按鈕之後焦點就停在那顆按鈕上,快捷鍵整組失效。
+  {
+    const source = 'flowchart TD\n  A[開始] --> B{判斷}\n  B --> C[結束]\n';
+    await page.goto(`http://127.0.0.1:${port}/.verify-ui/index.html`, { waitUntil: 'load' });
+    await page.evaluate(({ src, dark }) => window.postMessage({ type: 'load', source: src, dark }, '*'), {
+      src: source,
+      dark: DARK,
+    });
+    await page.waitForFunction(() => document.querySelectorAll('#app [data-node-id]').length > 0, { timeout: 20000 });
+    await new Promise((ok) => setTimeout(ok, 700));
+
+    const nodeCount = () => page.evaluate(() => document.querySelectorAll('#app [data-node-id]').length);
+    const nodeCenter = () =>
+      page.evaluate(() => {
+        const r = document.querySelector('#app [data-node-id]').getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      });
+    const problems = [];
+
+    // 1) 右鍵選單最後一項是「刪除」,按下去要真的刪掉。
+    const before = await nodeCount();
+    const rightAt = await nodeCenter();
+    await page.mouse.click(rightAt.x, rightAt.y, { button: 'right' });
+    await new Promise((ok) => setTimeout(ok, 250));
+    const item = await page.evaluate(() => {
+      const items = [...document.querySelectorAll('#app .rsm-ctx .rsm-ctx-item')];
+      if (!items.length) return null;
+      const r = items[items.length - 1].getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2, label: items[items.length - 1].textContent };
+    });
+    if (!item) {
+      problems.push('右鍵沒有跳出選單');
+    } else {
+      await page.mouse.click(item.x, item.y);
+      await new Promise((ok) => setTimeout(ok, 400));
+      const left = await nodeCount();
+      if (left !== before - 1) problems.push(`選單的「${item.label}」按了沒反應(${before} → ${left})`);
+    }
+
+    // 2) 選好節點後去點工具列(焦點離開畫布),Delete 與 ? 仍然要作用在畫布上。
+    const pickAt = await nodeCenter();
+    await page.mouse.click(pickAt.x, pickAt.y);
+    await new Promise((ok) => setTimeout(ok, 200));
+    await page.click('#btn-source'); // 這顆不會移動畫布,只開原始碼面板
+    await new Promise((ok) => setTimeout(ok, 200));
+    const beforeKey = await nodeCount();
+    await page.keyboard.press('Delete');
+    await new Promise((ok) => setTimeout(ok, 400));
+    const afterKey = await nodeCount();
+    if (afterKey !== beforeKey - 1) problems.push(`焦點在工具列時 Delete 失效(${beforeKey} → ${afterKey})`);
+    await page.keyboard.press('?');
+    await new Promise((ok) => setTimeout(ok, 300));
+    const help = await page.evaluate(() => Boolean(document.querySelector('#app .rsm-help-overlay')));
+    if (!help) problems.push('焦點在工具列時 ? 叫不出快捷鍵說明');
+
+    dragResults.push({ name: '右鍵選單指令 + 工具列焦點快捷鍵', busy: 1, problems });
+  }
 } finally {
   await browser.close();
   server.close();

@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased — the drawing editor's right-click menu and shortcuts work again
+
+Two dead inputs in the drawing editor, both from `react-super-mermaid` and both invisible to any
+test that drives the editor through its API rather than through a real mouse and keyboard.
+
+- **Fix**: picking anything from a right-click menu did nothing. The library closes the menu from a
+  `pointerdown` listener on `document`, which runs *before* the item's own `click` — the item is out
+  of the DOM by the time the click would be dispatched, so no menu command ever ran. The webview now
+  keeps a pointerdown inside the menu from reaching `document`; closing is left to the item handler,
+  which calls the library's own close first.
+- **Fix**: keyboard shortcuts (Delete, `?`, Ctrl+Z, the arrow nudges, V / N / E) were dead until the
+  canvas itself was clicked, and every toolbar click killed them again — the library binds its
+  `keydown` to the canvas host and nothing ever focuses it, so on a freshly opened panel the focus is
+  still on `<body>` and afterwards it sits on whichever toolbar button was pressed last. The webview
+  now listens on `document` and replays the event on the canvas host unless the focus is already
+  inside the canvas or in a field that must keep its own keys (input / textarea / select /
+  contenteditable, so the source panel and the inline label editors are untouched).
+- **New**: `npm run verify:ui` case *右鍵選單指令 + 工具列焦點快捷鍵* — right-clicks a node, clicks
+  the menu's last item, then selects a node, clicks a toolbar button and presses Delete and `?`. All
+  three symptoms fail this case without the fix.
+
 ## Unreleased — Traditional Chinese is back
 
 This fork's upstream is a zh-TW project, and the Russian localization replaced its Chinese UI

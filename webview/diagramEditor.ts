@@ -108,16 +108,72 @@ function localizeLibDom(root: HTMLElement): void {
   }
 }
 
+/**
+ * Keep the right-click menu alive long enough for the click to land.
+ *
+ * react-super-mermaid closes the menu from a `pointerdown` listener on
+ * `document`, and that fires before the item's own `click`: the item is out of
+ * the DOM by the time the click would be dispatched, so no menu command ever
+ * ran. Holding the pointerdown inside the menu back from `document` leaves the
+ * closing to the item handler, which calls the library's own close first.
+ */
+function keepMenuUntilClick(menu: HTMLElement): void {
+  menu.addEventListener('pointerdown', (e) => e.stopPropagation());
+}
+
 /** 選單 / 說明是使用時才建立的,所以用 observer 在它們掛上畫布的當下就翻好。 */
 function watchLibDom(host: HTMLElement): void {
   const observer = new MutationObserver((records) => {
     for (const rec of records) {
       for (const added of Array.from(rec.addedNodes)) {
-        if (added instanceof HTMLElement) localizeLibDom(added);
+        if (!(added instanceof HTMLElement)) continue;
+        localizeLibDom(added);
+        if (added.classList.contains('rsm-ctx')) keepMenuUntilClick(added);
+        for (const menu of Array.from(added.querySelectorAll<HTMLElement>('.rsm-ctx'))) {
+          keepMenuUntilClick(menu);
+        }
       }
     }
   });
   observer.observe(host, { childList: true, subtree: true });
+}
+
+/** Fields where a keystroke belongs to the field, not to the canvas. */
+function isTypingTarget(el: HTMLElement): boolean {
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
+
+/**
+ * Route the canvas shortcuts to the canvas whatever holds the focus.
+ *
+ * The library binds its keydown handler to the canvas host and never focuses
+ * it, so on a freshly opened panel the focus is still on <body> and every
+ * shortcut — Delete, ?, Ctrl+Z, the arrow nudges — is dead until the drawing is
+ * clicked. Worse, each toolbar click parks the focus on a button and kills them
+ * again. So the webview listens on `document` and replays the event on the host
+ * unless the focus is already inside the canvas or in a field that must keep
+ * its own keys. `preventDefault` is mirrored back, otherwise Ctrl+A / Ctrl+D
+ * would also run the browser's own action.
+ */
+function forwardHotkeys(host: HTMLElement): void {
+  document.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented) return;
+    const target = e.target instanceof HTMLElement ? e.target : null;
+    if (target && (host.contains(target) || isTypingTarget(target))) return;
+    const replay = new KeyboardEvent('keydown', {
+      key: e.key,
+      code: e.code,
+      ctrlKey: e.ctrlKey,
+      shiftKey: e.shiftKey,
+      altKey: e.altKey,
+      metaKey: e.metaKey,
+      repeat: e.repeat,
+      bubbles: false,
+      cancelable: true,
+    });
+    if (!host.dispatchEvent(replay)) e.preventDefault();
+  });
 }
 
 // 箭頭端的友善名稱(下拉選單用)。flowchart 用前 5 種;三角 / 菱形 / 鳥足為 class/er 圖種。
@@ -528,6 +584,7 @@ window.addEventListener('message', (event) => {
         look: 'clean',
       });
       watchLibDom(app);
+      forwardHotkeys(app);
       handle.on('mermaidchange', (text) => {
         updateSourcePanel(text as string); // 即時更新原始碼面板(載入期間也更新)
         if (suppressWriteBack) return;

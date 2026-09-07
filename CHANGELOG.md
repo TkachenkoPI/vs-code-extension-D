@@ -14,9 +14,14 @@ test that drives the editor through its API rather than through a real mouse and
   canvas itself was clicked, and every toolbar click killed them again — the library binds its
   `keydown` to the canvas host and nothing ever focuses it, so on a freshly opened panel the focus is
   still on `<body>` and afterwards it sits on whichever toolbar button was pressed last. The webview
-  now listens on `document` and replays the event on the canvas host unless the focus is already
-  inside the canvas or in a field that must keep its own keys (input / textarea / select /
-  contenteditable, so the source panel and the inline label editors are untouched).
+  now replays the event on the canvas host unless the focus is already inside the canvas or in a
+  field that must keep its own keys (input / textarea / select / contenteditable, so the source panel
+  and the inline label editors are untouched). It listens on `window` in the capture phase and does
+  not skip events whose default is already prevented: inside a VS Code webview the page shares the
+  keydown with the workbench's own keybinding dispatch, and a shortcut VS Code has claimed must still
+  reach the canvas. What no webview code can fix is a keystroke that never arrives — VS Code hands
+  keys to whatever *it* considers focused, so the panel still needs one click (or to be the active
+  tab) before it hears anything at all.
 - **New**: `npm run verify:ui` case *右鍵選單指令 + 工具列焦點快捷鍵* — right-clicks a node, clicks
   the menu's last item, then selects a node, clicks a toolbar button and presses Delete and `?`. All
   three symptoms fail this case without the fix.

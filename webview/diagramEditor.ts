@@ -151,29 +151,39 @@ function isTypingTarget(el: HTMLElement): boolean {
  * it, so on a freshly opened panel the focus is still on <body> and every
  * shortcut — Delete, ?, Ctrl+Z, the arrow nudges — is dead until the drawing is
  * clicked. Worse, each toolbar click parks the focus on a button and kills them
- * again. So the webview listens on `document` and replays the event on the host
- * unless the focus is already inside the canvas or in a field that must keep
- * its own keys. `preventDefault` is mirrored back, otherwise Ctrl+A / Ctrl+D
- * would also run the browser's own action.
+ * again. So the webview replays the event on the host unless the focus is
+ * already inside the canvas or in a field that must keep its own keys.
+ * `preventDefault` is mirrored back, otherwise Ctrl+A / Ctrl+D would also run
+ * the browser's own action.
+ *
+ * On `window` in the capture phase, and deliberately without a
+ * `defaultPrevented` bail: inside a VS Code webview the page shares the keydown
+ * with the workbench's own keybinding dispatch, and a shortcut that VS Code has
+ * already claimed must still reach the canvas. What this cannot fix is a
+ * keystroke that never arrives — VS Code hands keys to whatever *it* considers
+ * focused, so the panel needs one click (or to be the active tab) first.
  */
 function forwardHotkeys(host: HTMLElement): void {
-  document.addEventListener('keydown', (e) => {
-    if (e.defaultPrevented) return;
-    const target = e.target instanceof HTMLElement ? e.target : null;
-    if (target && (host.contains(target) || isTypingTarget(target))) return;
-    const replay = new KeyboardEvent('keydown', {
-      key: e.key,
-      code: e.code,
-      ctrlKey: e.ctrlKey,
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-      metaKey: e.metaKey,
-      repeat: e.repeat,
-      bubbles: false,
-      cancelable: true,
-    });
-    if (!host.dispatchEvent(replay)) e.preventDefault();
-  });
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      const target = e.target instanceof HTMLElement ? e.target : null;
+      if (target && (host.contains(target) || isTypingTarget(target))) return;
+      const replay = new KeyboardEvent('keydown', {
+        key: e.key,
+        code: e.code,
+        ctrlKey: e.ctrlKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        metaKey: e.metaKey,
+        repeat: e.repeat,
+        bubbles: false,
+        cancelable: true,
+      });
+      if (!host.dispatchEvent(replay)) e.preventDefault();
+    },
+    true,
+  );
 }
 
 // 箭頭端的友善名稱(下拉選單用)。flowchart 用前 5 種;三角 / 菱形 / 鳥足為 class/er 圖種。

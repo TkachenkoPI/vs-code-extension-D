@@ -396,10 +396,11 @@ function checkNodeTextContrast() {
   return out;
 }
 
-/** 用同一份 EDITOR_BODY_HTML 組出頁面;acquireVsCodeApi 用假的頂替(webview 才有)。 */
+/** 用同一份 buildEditorBodyHtml 組出頁面;acquireVsCodeApi 用假的頂替(webview 才有)。
+ *  語言:走預設(英文原文),不需要 vscode.l10n。 */
 async function buildPage() {
   mkdirSync(WORK, { recursive: true });
-  // src/editorPanelHtml.ts 是純字串常數,直接 bundle 成一個回傳字串的模組。
+  // src/editorPanelHtml.ts 不依賴 vscode,直接 bundle 成一個回傳字串的模組。
   await build({
     entryPoints: [join(ROOT, 'src', 'editorPanelHtml.ts')],
     bundle: true,
@@ -408,15 +409,16 @@ async function buildPage() {
     outfile: join(WORK, 'body.mjs'),
     logLevel: 'warning',
   });
-  const { EDITOR_BODY_HTML } = await import(`file:///${join(WORK, 'body.mjs').replace(/\\/g, '/')}`);
+  const { buildEditorBodyHtml } = await import(`file:///${join(WORK, 'body.mjs').replace(/\\/g, '/')}`);
+  const bodyHtml = buildEditorBodyHtml();
   writeFileSync(
     join(WORK, 'index.html'),
-    `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+    `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <link rel="stylesheet" href="/media/editor.css">
 <style>html,body{margin:0;height:100%}${DARK ? "body{background:#1e1e1e}" : ""}</style></head>
-<body data-font-uri="/media/Excalifont.woff2">
+<body data-locale="en" data-font-uri="/media/Excalifont.woff2">
 <script>window.acquireVsCodeApi = () => ({ postMessage: (m) => { (window.__posted ||= []).push(m); } });</script>
-${EDITOR_BODY_HTML}
+${bodyHtml}
 <script src="/dist/diagramEditor.js"></script>
 </body></html>`,
   );

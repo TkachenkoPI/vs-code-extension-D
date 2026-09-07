@@ -1,0 +1,17 @@
+{
+  "extension.displayName": "Super Mermaid",
+  "extension.description": "Mermaid diagrams that look good out of the box — auto-colored live preview with pan/zoom, plus one-click hi-res PNG/SVG export (up to 4x, transparent background, batch Export All).",
+
+  "command.category": "Super Mermaid",
+  "command.openToSide.title": "Super Mermaid: Open Preview to the Side",
+  "command.editDiagram.title": "Edit Diagram",
+  "command.editDiagramInNewWindow.title": "Open Diagram in New Window",
+  "command.insertTemplate.title": "Super Mermaid: Insert Diagram Template",
+  "command.openMarkdownPreview.title": "Super Mermaid: Open Markdown Preview to the Side",
+  "command.openMarkdownPreviewInNewWindow.title": "Super Mermaid: Open Markdown Preview in New Window",
+
+  "configuration.title": "Super Mermaid",
+  "configuration.previewLocation.description": "Where to open the Mermaid preview. `beside` opens it as a split beside the editor (same as the built-in Markdown preview); `newWindow` pops it out into its own floating window.",
+  "configuration.previewLocation.newWindow": "Open the preview in a separate floating window",
+  "configuration.previewLocation.beside": "Open the preview beside the editor (split view)"
+}

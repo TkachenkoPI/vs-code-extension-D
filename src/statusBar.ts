@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { extractMermaidBlocks, isSupportedDoc } from './mermaidExtract';
+import { diagramCount } from './plural';
 
 /** Status bar entry: "$(graph) N diagrams" for the active markdown/mermaid editor. */
 export class MermaidStatusBar implements vscode.Disposable {
@@ -10,7 +11,7 @@ export class MermaidStatusBar implements vscode.Disposable {
 
   public constructor() {
     this.item.command = 'superMermaid.openToSide';
-    this.item.tooltip = 'Open Super Mermaid preview';
+    this.item.tooltip = vscode.l10n.t('Open Super Mermaid preview');
   }
 
   public refresh(editor: vscode.TextEditor | undefined): void {
@@ -23,7 +24,7 @@ export class MermaidStatusBar implements vscode.Disposable {
       this.item.hide();
       return;
     }
-    this.item.text = `$(graph) ${count} diagram${count === 1 ? '' : 's'}`;
+    this.item.text = `$(graph) ${diagramCount(count)}`;
     this.item.show();
   }
 

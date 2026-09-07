@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { deflateSync } from 'zlib';
 import { BlockError, MermaidDiagnostics } from './diagnostics';
 import { extractMermaidBlocks, isMermaidFileDoc, MermaidBlock } from './mermaidExtract';
+import { diagramCount } from './plural';
 
 /**
  * Where share links point. The page reads the same `#pako:` fragment this
@@ -38,12 +39,19 @@ type WebviewMessage =
   | { type: 'exportAllError'; index: number; label: string; message: string }
   | { type: 'exportAllDone' };
 
-const EXPORT_FILTERS: Record<ExportFormat, Record<string, string[]>> = {
-  svg: { 'SVG Image': ['svg'] },
-  png: { 'PNG Image': ['png'] },
-  jpg: { 'JPEG Image': ['jpg', 'jpeg'] },
-  webp: { 'WebP Image': ['webp'] },
-};
+/** Save-dialog file-type filters. Built per call so the label follows the UI language. */
+function exportFilters(format: ExportFormat): Record<string, string[]> {
+  switch (format) {
+    case 'svg':
+      return { [vscode.l10n.t('SVG Image')]: ['svg'] };
+    case 'png':
+      return { [vscode.l10n.t('PNG Image')]: ['png'] };
+    case 'jpg':
+      return { [vscode.l10n.t('JPEG Image')]: ['jpg', 'jpeg'] };
+    default:
+      return { [vscode.l10n.t('WebP Image')]: ['webp'] };
+  }
+}
 
 function decodeExportData(format: ExportFormat, data: string): Buffer {
   return format === 'svg'
@@ -285,7 +293,9 @@ export class PreviewPanel {
         break;
       case 'copyText':
         await vscode.env.clipboard.writeText(msg.text);
-        void vscode.window.showInformationMessage(`Mermaid Preview: ${msg.what} copied to clipboard`);
+        void vscode.window.showInformationMessage(
+          vscode.l10n.t('Mermaid Preview: {0} — copied to clipboard', vscode.l10n.t(msg.what)),
+        );
         break;
       case 'copyImageFallback':
         await this.copyImageViaOs(msg.data);
@@ -331,7 +341,7 @@ export class PreviewPanel {
       canSelectFiles: false,
       canSelectMany: false,
       defaultUri: vscode.Uri.file(defaultDir),
-      openLabel: 'Export diagrams here',
+      openLabel: vscode.l10n.t('Export diagrams here'),
     });
     if (!picked?.[0]) {
       void this.panel.webview.postMessage({ type: 'exportAllCancel' });
@@ -341,7 +351,7 @@ export class PreviewPanel {
     void vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: 'Super Mermaid: exporting diagrams',
+        title: vscode.l10n.t('Super Mermaid: exporting diagrams'),
         cancellable: true,
       },
       (progress, token) =>
@@ -388,14 +398,24 @@ export class PreviewPanel {
     const where = pending.folder.fsPath;
     if (pending.skipped.length === 0) {
       void vscode.window.showInformationMessage(
-        `Super Mermaid: exported ${pending.written} diagram${pending.written === 1 ? '' : 's'} to ${where}`,
+        vscode.l10n.t(
+          'Super Mermaid: exported {0} to {1}',
+          diagramCount(pending.written),
+          where,
+        ),
       );
     } else {
       const detail = pending.skipped
         .map((s) => `${s.label}: ${s.message.split('\n')[0]}`)
         .join('; ');
       void vscode.window.showWarningMessage(
-        `Super Mermaid: exported ${pending.written} of ${pending.total} diagrams to ${where} — skipped ${detail}`,
+        vscode.l10n.t(
+          'Super Mermaid: exported {0} of {1} diagrams to {2} — skipped {3}',
+          pending.written,
+          pending.total,
+          where,
+          detail,
+        ),
       );
     }
   }
@@ -426,18 +446,24 @@ export class PreviewPanel {
     const encoded = deflateSync(Buffer.from(state, 'utf8'), { level: 9 }).toString('base64url');
     const url = `${SHARE_BASE_URL}#pako:${encoded}`;
     const warning =
-      url.length > 8000 ? ' (very long link — some chat apps may truncate it)' : '';
+      url.length > 8000
+        ? vscode.l10n.t(' (very long link — some chat apps may truncate it)')
+        : '';
+    const openLabel = vscode.l10n.t('Open in Browser');
+    const copyLabel = vscode.l10n.t('Copy URL');
     const action = await vscode.window.showInformationMessage(
-      `Super Mermaid: share link ready${warning}`,
-      'Open in Browser',
-      'Copy URL',
+      vscode.l10n.t('Super Mermaid: share link ready{0}', warning),
+      openLabel,
+      copyLabel,
     );
-    if (action === 'Open in Browser') {
+    if (action === openLabel) {
       await vscode.env.openExternal(vscode.Uri.parse(url));
-    } else if (action === 'Copy URL') {
+    } else if (action === copyLabel) {
       await vscode.env.clipboard.writeText(url);
       void vscode.window.showInformationMessage(
-        'Super Mermaid: share URL copied — it opens the diagram on an external preview page (blog.markkulab.net)',
+        vscode.l10n.t(
+          'Super Mermaid: share URL copied — it opens the diagram on an external preview page (blog.markkulab.net)',
+        ),
       );
     }
   }
@@ -462,10 +488,14 @@ export class PreviewPanel {
       void vscode.workspace.fs.delete(tmpUri).then(undefined, () => undefined);
       if (error) {
         void vscode.window.showErrorMessage(
-          'Super Mermaid: could not copy the image to the clipboard — use Export PNG instead.',
+          vscode.l10n.t(
+            'Super Mermaid: could not copy the image to the clipboard — use Export PNG instead.',
+          ),
         );
       } else {
-        void vscode.window.showInformationMessage('Super Mermaid: image copied to clipboard');
+        void vscode.window.showInformationMessage(
+          vscode.l10n.t('Super Mermaid: image copied to clipboard'),
+        );
       }
     });
   }
@@ -509,13 +539,15 @@ export class PreviewPanel {
         : (vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? os.homedir());
     const uri = await vscode.window.showSaveDialog({
       defaultUri: vscode.Uri.file(path.join(dir, msg.suggestedName)),
-      filters: EXPORT_FILTERS[msg.format],
+      filters: exportFilters(msg.format),
     });
     if (!uri) {
       return;
     }
     await vscode.workspace.fs.writeFile(uri, decodeExportData(msg.format, msg.data));
-    void vscode.window.showInformationMessage(`Super Mermaid: exported ${path.basename(uri.fsPath)}`);
+    void vscode.window.showInformationMessage(
+      vscode.l10n.t('Super Mermaid: exported {0}', path.basename(uri.fsPath)),
+    );
   }
 
   private findSourceEditor(): vscode.TextEditor | undefined {
@@ -617,92 +649,93 @@ export class PreviewPanel {
     // exported SVGs — external url() fonts don't survive SVG-to-canvas raster.
     const fontUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'Excalifont.woff2'));
     const nonce = getNonce();
+    const t = vscode.l10n.t;
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${vscode.env.language}">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data: blob:; font-src ${webview.cspSource} data:; connect-src ${webview.cspSource};" />
   <link rel="stylesheet" href="${styleUri}" />
-  <title>Mermaid Preview</title>
+  <title>${t('Mermaid Preview')}</title>
 </head>
-<body data-font-uri="${fontUri}">
+<body data-locale="${vscode.env.language}" data-font-uri="${fontUri}">
   <div id="toolbar">
-    <select id="block-select" hidden title="Select diagram"></select>
-    <button id="presentation-toggle" title="Presentation mode (p)">${ICON_PLAY}</button>
-    <button id="zoom-reset" title="Fit to view (0, or double-click canvas)">${ICON_FIT}</button>
-    <button id="search-toggle" title="Find in diagram (/)">${ICON_SEARCH}</button>
+    <select id="block-select" hidden title="${t('Select diagram')}"></select>
+    <button id="presentation-toggle" title="${t('Presentation mode (p)')}">${ICON_PLAY}</button>
+    <button id="zoom-reset" title="${t('Fit to view (0, or double-click canvas)')}">${ICON_FIT}</button>
+    <button id="search-toggle" title="${t('Find in diagram (/)')}">${ICON_SEARCH}</button>
     <div class="sep"></div>
-    <select id="theme-select" title="Mermaid theme / style">
-      <option value="colorful">Colorful</option>
-      <option value="sketch">Sketch</option>
-      <option value="auto">Auto</option>
-      <option value="default">Light</option>
-      <option value="dark">Dark</option>
-      <option value="neutral">Neutral</option>
-      <option value="forest">Forest</option>
+    <select id="theme-select" title="${t('Mermaid theme / style')}">
+      <option value="colorful">${t('Colorful')}</option>
+      <option value="sketch">${t('Sketch')}</option>
+      <option value="auto">${t('Auto')}</option>
+      <option value="default">${t('Light')}</option>
+      <option value="dark">${t('Dark')}</option>
+      <option value="neutral">${t('Neutral')}</option>
+      <option value="forest">${t('Forest')}</option>
     </select>
-    <button id="bg-menu-btn" title="Background"><span id="bg-current" class="bg-current" data-bg=""></span></button>
+    <button id="bg-menu-btn" title="${t('Background')}"><span id="bg-current" class="bg-current" data-bg=""></span></button>
     <div class="sep"></div>
-    <button id="export-menu-btn" title="Export diagram…">${ICON_DOWNLOAD}</button>
+    <button id="export-menu-btn" title="${t('Export diagram…')}">${ICON_DOWNLOAD}</button>
     <div class="sep"></div>
-    <button id="share-live-btn" title="Copy a share link — the diagram travels in the URL and opens on an external preview page">${ICON_SHARE}</button>
-    <button id="more-btn" title="More…">${ICON_MORE}</button>
+    <button id="share-live-btn" title="${t('Copy a share link — the diagram travels in the URL and opens on an external preview page')}">${ICON_SHARE}</button>
+    <button id="more-btn" title="${t('More…')}">${ICON_MORE}</button>
   </div>
   <div id="zoom-controls">
-    <button id="zoom-out" title="Zoom out (-)">${ICON_ZOOM_OUT}</button>
-    <span id="zoom-level" title="Click for actual size (1)">100%</span>
-    <button id="zoom-in" title="Zoom in (+)">${ICON_ZOOM_IN}</button>
+    <button id="zoom-out" title="${t('Zoom out (-)')}">${ICON_ZOOM_OUT}</button>
+    <span id="zoom-level" title="${t('Click for actual size (1)')}">100%</span>
+    <button id="zoom-in" title="${t('Zoom in (+)')}">${ICON_ZOOM_IN}</button>
   </div>
   <div id="search-bar" hidden>
-    <input id="search-input" type="text" placeholder="Find in diagram…" spellcheck="false" />
+    <input id="search-input" type="text" placeholder="${t('Find in diagram…')}" spellcheck="false" />
     <span id="search-count"></span>
   </div>
   <div id="export-menu" class="dropdown" hidden>
-    <button class="menu-item" id="menu-copy-image">${ICON_COPY}<span>Copy as image (c)</span></button>
+    <button class="menu-item" id="menu-copy-image">${ICON_COPY}<span>${t('Copy as image (c)')}</span></button>
     <div class="menu-sep"></div>
-    <button class="menu-item" data-format="svg">${ICON_DOWNLOAD}<span>Export SVG</span></button>
-    <button class="menu-item" data-format="png">${ICON_DOWNLOAD}<span>Export PNG</span></button>
-    <button class="menu-item" data-format="jpg">${ICON_DOWNLOAD}<span>Export JPG</span></button>
-    <button class="menu-item" data-format="webp">${ICON_DOWNLOAD}<span>Export WebP</span></button>
+    <button class="menu-item" data-format="svg">${ICON_DOWNLOAD}<span>${t('Export SVG')}</span></button>
+    <button class="menu-item" data-format="png">${ICON_DOWNLOAD}<span>${t('Export PNG')}</span></button>
+    <button class="menu-item" data-format="jpg">${ICON_DOWNLOAD}<span>${t('Export JPG')}</span></button>
+    <button class="menu-item" data-format="webp">${ICON_DOWNLOAD}<span>${t('Export WebP')}</span></button>
     <div class="menu-sep"></div>
-    <button class="menu-item" id="menu-export-all-png">${ICON_GALLERY}<span>Export all (PNG)</span></button>
-    <button class="menu-item" id="menu-export-all-svg">${ICON_GALLERY}<span>Export all (SVG)</span></button>
+    <button class="menu-item" id="menu-export-all-png">${ICON_GALLERY}<span>${t('Export all (PNG)')}</span></button>
+    <button class="menu-item" id="menu-export-all-svg">${ICON_GALLERY}<span>${t('Export all (SVG)')}</span></button>
     <div class="menu-sep"></div>
     <div class="menu-row">
-      <span>Scale</span>
-      <select id="png-scale" title="Raster resolution">
+      <span>${t('Scale')}</span>
+      <select id="png-scale" title="${t('Raster resolution')}">
         <option value="1">1x</option>
         <option value="2">2x</option>
         <option value="4">4x</option>
       </select>
     </div>
-    <label class="menu-row" title="PNG / WebP only">
+    <label class="menu-row" title="${t('PNG / WebP only')}">
       <input type="checkbox" id="bg-transparent" />
-      <span>Transparent background</span>
+      <span>${t('Transparent background')}</span>
     </label>
   </div>
   <div id="more-menu" class="dropdown" hidden>
-    <button class="menu-item" id="gallery-toggle">${ICON_GALLERY}<span>Gallery — all diagrams (g)</span></button>
-    <button class="menu-item" id="lock-btn" title="Lock to current file"><span class="icon-unlocked">${ICON_UNLOCK}</span><span class="icon-locked">${ICON_LOCK}</span><span id="lock-label">Lock to current file</span></button>
-    <button class="menu-item" id="refresh-btn">${ICON_REFRESH}<span>Re-render</span></button>
-    <button class="menu-item" id="fit-width">${ICON_FIT_WIDTH}<span>Fit width (w)</span></button>
+    <button class="menu-item" id="gallery-toggle">${ICON_GALLERY}<span>${t('Gallery — all diagrams (g)')}</span></button>
+    <button class="menu-item" id="lock-btn" title="${t('Lock to current file')}"><span class="icon-unlocked">${ICON_UNLOCK}</span><span class="icon-locked">${ICON_LOCK}</span><span id="lock-label">${t('Lock to current file')}</span></button>
+    <button class="menu-item" id="refresh-btn">${ICON_REFRESH}<span>${t('Re-render')}</span></button>
+    <button class="menu-item" id="fit-width">${ICON_FIT_WIDTH}<span>${t('Fit width (w)')}</span></button>
   </div>
   <div id="bg-menu" class="dropdown" hidden>
-    <div class="menu-label">Background<span class="menu-hint">also used for export</span></div>
-    <div class="bg-section-label">Surface</div>
+    <div class="menu-label">${t('Background')}<span class="menu-hint">${t('also used for export')}</span></div>
+    <div class="bg-section-label">${t('Surface')}</div>
     <div class="bg-swatches" id="bg-swatches">
-      <button class="bg-swatch" data-bg="" title="Default — follow editor"></button>
-      <button class="bg-swatch" data-bg="#FFFFFF" style="background-color:#FFFFFF" title="White"></button>
-      <button class="bg-swatch" data-bg="#F3F4F6" style="background-color:#F3F4F6" title="Light gray"></button>
-      <button class="bg-swatch" data-bg="#EFF6FF" style="background-color:#EFF6FF" title="Light blue"></button>
-      <button class="bg-swatch" data-bg="#FEFCE8" style="background-color:#FEFCE8" title="Light yellow"></button>
-      <button class="bg-swatch" data-bg="#FDF2F8" style="background-color:#FDF2F8" title="Light rose"></button>
+      <button class="bg-swatch" data-bg="" title="${t('Default — follow editor')}"></button>
+      <button class="bg-swatch" data-bg="#FFFFFF" style="background-color:#FFFFFF" title="${t('White')}"></button>
+      <button class="bg-swatch" data-bg="#F3F4F6" style="background-color:#F3F4F6" title="${t('Light gray')}"></button>
+      <button class="bg-swatch" data-bg="#EFF6FF" style="background-color:#EFF6FF" title="${t('Light blue')}"></button>
+      <button class="bg-swatch" data-bg="#FEFCE8" style="background-color:#FEFCE8" title="${t('Light yellow')}"></button>
+      <button class="bg-swatch" data-bg="#FDF2F8" style="background-color:#FDF2F8" title="${t('Light rose')}"></button>
     </div>
-    <div class="bg-section-label">Pattern</div>
+    <div class="bg-section-label">${t('Pattern')}</div>
     <div class="bg-seg" id="bg-pattern">
-      <button data-pattern="none" title="No pattern">▢ None</button>
-      <button data-pattern="dots" title="Dot grid">⠿ Dots</button>
-      <button data-pattern="grid" title="Line grid">⊞ Grid</button>
+      <button data-pattern="none" title="${t('No pattern')}">▢ ${t('None')}</button>
+      <button data-pattern="dots" title="${t('Dot grid')}">⠿ ${t('Dots')}</button>
+      <button data-pattern="grid" title="${t('Line grid')}">⊞ ${t('Grid')}</button>
     </div>
   </div>
   <div id="canvas">
@@ -710,15 +743,15 @@ export class PreviewPanel {
     <div id="gallery" hidden></div>
     <div id="empty" hidden>
       <div class="empty-icon">${ICON_EMPTY}</div>
-      <div class="empty-title">No Mermaid diagram found</div>
-      <div class="empty-hint">Add a \`\`\`mermaid code block, or open a .mmd file</div>
+      <div class="empty-title">${t('No Mermaid diagram found')}</div>
+      <div class="empty-hint">${t('Add a \`\`\`mermaid code block, or open a .mmd file')}</div>
     </div>
     <div id="error" hidden></div>
     <div id="toast"></div>
     <div id="pres-counter" hidden></div>
-    <div id="pres-hint" hidden>Click / ← → switch · Esc exit</div>
-    <button id="pres-exit" hidden title="Exit presentation (Esc)">✕</button>
-    <button id="view-exit" hidden title="Back to editor (Esc)">✕</button>
+    <div id="pres-hint" hidden>${t('Click / ← → switch · Esc exit')}</div>
+    <button id="pres-exit" hidden title="${t('Exit presentation (Esc)')}">✕</button>
+    <button id="view-exit" hidden title="${t('Back to editor (Esc)')}">✕</button>
   </div>
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>

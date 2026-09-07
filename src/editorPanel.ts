@@ -2,16 +2,18 @@
 // 編輯後把序列化的 mermaid 透過 WorkspaceEdit 精準寫回該 fence(用 startLine/endLine)。
 
 import * as vscode from 'vscode';
-import { EDITOR_BODY_HTML } from './editorPanelHtml';
+import { buildEditorBodyHtml } from './editorPanelHtml';
 import * as path from 'path';
 import * as os from 'os';
 import { extractMermaidBlocks, isMermaidFileDoc } from './mermaidExtract';
 
 type ExportFormat = 'svg' | 'png';
-const EXPORT_FILTERS: Record<ExportFormat, Record<string, string[]>> = {
-  svg: { 'SVG Image': ['svg'] },
-  png: { 'PNG Image': ['png'] },
-};
+/** Save-dialog file-type filters. Built per call so the label follows the UI language. */
+function exportFilters(format: ExportFormat): Record<string, string[]> {
+  return format === 'svg'
+    ? { [vscode.l10n.t('SVG Image')]: ['svg'] }
+    : { [vscode.l10n.t('PNG Image')]: ['png'] };
+}
 function decodeExportData(format: ExportFormat, data: string): Buffer {
   return format === 'svg'
     ? Buffer.from(data, 'utf8')
@@ -47,14 +49,19 @@ export class EditorPanel {
       EditorPanel.current.rebind(doc, blockIndex);
       return;
     }
-    const panel = vscode.window.createWebviewPanel(EditorPanel.viewType, 'Mermaid 繪製', column, {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-      localResourceRoots: [
-        vscode.Uri.joinPath(context.extensionUri, 'dist'),
-        vscode.Uri.joinPath(context.extensionUri, 'media'),
-      ],
-    });
+    const panel = vscode.window.createWebviewPanel(
+      EditorPanel.viewType,
+      vscode.l10n.t('Mermaid Drawing'),
+      column,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [
+          vscode.Uri.joinPath(context.extensionUri, 'dist'),
+          vscode.Uri.joinPath(context.extensionUri, 'media'),
+        ],
+      },
+    );
     EditorPanel.current = new EditorPanel(context, panel, doc, blockIndex);
   }
 
@@ -100,7 +107,9 @@ export class EditorPanel {
     } else if (msg.type === 'mermaidchange') {
       this.scheduleWriteBack(msg.text);
     } else if (msg.type === 'error') {
-      void vscode.window.showWarningMessage(`Mermaid 繪製:${msg.message}`);
+      void vscode.window.showWarningMessage(
+        vscode.l10n.t('Mermaid Drawing: {0}', msg.message),
+      );
     } else if (msg.type === 'export') {
       void this.saveExport(msg);
     } else if (msg.type === 'selectBlock') {
@@ -122,11 +131,13 @@ export class EditorPanel {
         : (vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? os.homedir());
     const uri = await vscode.window.showSaveDialog({
       defaultUri: vscode.Uri.file(path.join(dir, msg.suggestedName)),
-      filters: EXPORT_FILTERS[msg.format],
+      filters: exportFilters(msg.format),
     });
     if (!uri) return;
     await vscode.workspace.fs.writeFile(uri, decodeExportData(msg.format, msg.data));
-    void vscode.window.showInformationMessage(`Mermaid 繪製:已匯出 ${path.basename(uri.fsPath)}`);
+    void vscode.window.showInformationMessage(
+      vscode.l10n.t('Mermaid Drawing: exported {0}', path.basename(uri.fsPath)),
+    );
   }
 
   /** 防抖寫回(避免一次拖曳產生過多文件編輯)。 */
@@ -185,8 +196,8 @@ export class EditorPanel {
   }
 
   private updateTitle(): void {
-    const name = this.doc.fileName.split(/[\\/]/).pop() ?? 'diagram';
-    this.panel.title = `Mermaid 繪製:${name}`;
+    const name = this.doc.fileName.split(/[\\/]/).pop() ?? vscode.l10n.t('diagram');
+    this.panel.title = vscode.l10n.t('Mermaid Drawing: {0}', name);
   }
 
   private getHtml(): string {
@@ -202,15 +213,15 @@ export class EditorPanel {
     );
     const nonce = getNonce();
     return `<!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="${vscode.env.language}">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data: blob:; font-src ${webview.cspSource} data:; connect-src ${webview.cspSource};" />
   <link rel="stylesheet" href="${styleUri}" />
-  <title>Mermaid 繪製</title>
+  <title>${vscode.l10n.t('Mermaid Drawing')}</title>
 </head>
-<body data-font-uri="${fontUri}">
-${EDITOR_BODY_HTML}
+<body data-locale="${vscode.env.language}" data-font-uri="${fontUri}">
+${buildEditorBodyHtml(vscode.l10n.t)}
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;

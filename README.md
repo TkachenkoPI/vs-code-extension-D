@@ -1,5 +1,7 @@
 # Super Mermaid
 
+**English** · [Русский](README.ru.md)
+
 [![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/mark-ku.super-mermaid?label=Marketplace&color=2EA043)](https://marketplace.visualstudio.com/items?itemName=mark-ku.super-mermaid)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/mark-ku.super-mermaid?color=0078D4)](https://marketplace.visualstudio.com/items?itemName=mark-ku.super-mermaid)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/mark-ku.super-mermaid)](https://marketplace.visualstudio.com/items?itemName=mark-ku.super-mermaid&ssr=false#review-details)
@@ -33,7 +35,7 @@ Don't want to hand-write Mermaid? Click the **✏ Draw** CodeLens above a ```` `
 | **Charts** | **quadrant** · **pie** · **xychart** |
 | **Form** | timeline · **ORID** |
 
-The toolbar offers **only the shapes the diagram type can actually serialize** — a class diagram gets 「類別」, a state diagram gets 狀態 / 起始 / 結束 / 選擇 / 分岔, a C4 diagram gets 人員 / 系統 / 資料庫 / 佇列. Drag to place shapes, drag from a node edge to connect (or to empty space to spawn a connected node), double-click to rename or edit cell content (ER attributes, class members, sequence messages, requirement fields), right-click for shape / colour / align / group / type-specific actions, build sequences from scratch, **reconnect edges**, toggle direction, auto-tidy, **edit the Mermaid source two-way** (套用 / Ctrl+Enter re-renders), **copy the diagram to the clipboard as an image**, and export SVG/PNG.
+The toolbar offers **only the shapes the diagram type can actually serialize** — a class diagram gets *class*, a state diagram gets *state / start / end / choice / fork*, a C4 diagram gets *person / system / database / queue*. Drag to place shapes, drag from a node edge to connect (or to empty space to spawn a connected node), double-click to rename or edit cell content (ER attributes, class members, sequence messages, requirement fields), right-click for shape / colour / align / group / type-specific actions, build sequences from scratch, **reconnect edges**, toggle direction, auto-tidy, **edit the Mermaid source two-way** (Apply / Ctrl+Enter re-renders), **copy the diagram to the clipboard as an image**, and export SVG/PNG.
 
 On many of the newer types, dragging *means* something rather than just tidying the layout:
 
@@ -93,6 +95,14 @@ share links, `%% @tip` and `%% @check` (item ids are `O1`, `R2`, `I1`, `D3`…).
 Right-click any `.md` file (in the editor or the Explorer) → **Open Markdown Preview to the Side** — and the **entire document** renders as one scrollable page: headings, tables, highlighted code, and every ```` ```mermaid ```` block auto-colored. Pick **Open Markdown Preview in New Window** instead to pop it onto a second monitor. Scroll sync, a clickable **Outline**, **find in document** (`Ctrl+F` — highlights reach even the text inside diagrams), reading themes, zoom, three content-width modes, and **PNG / PDF export** are all built in.
 
 ![Full Markdown document preview](docs/images/markdown-preview.png)
+
+## Languages
+
+The UI follows VS Code's **Display Language**: English by default, Russian when VS Code itself runs in Russian (`Ctrl+Shift+P` → **Configure Display Language**). Commands, panels, tooltips and notifications are all covered.
+
+One exception: the `mmd-*` **snippets**. `contributes.snippets` takes a single fixed path with no locale switch, so the shipped snippet file is generated in one language — Russian in this build (`npm run gen:snippets` with `SNIPPET_LOCALE=en` regenerates the English set). The **Insert Diagram Template** command is not affected: it goes through `vscode.l10n` and follows the editor's language at runtime.
+
+Cyrillic works in both looks, the hand-drawn **Sketch** one included — the bundled Excalifont carries a full Cyrillic set, so Russian text is not silently replaced by a fallback font, in exported PNG / SVG either.
 
 ## Install
 

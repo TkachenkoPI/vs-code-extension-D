@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased — Russian localization
+
+The UI was a mix of English and Traditional Chinese, and neither followed the editor's display
+language. Everything user-facing now goes through a translation layer with English as the source
+language and a Russian bundle alongside it, so the extension speaks Russian in a Russian VS Code and
+English everywhere else.
+
+- **New**: `package.nls.json` / `package.nls.ru.json` for the manifest (command titles, settings
+  descriptions), `l10n/bundle.l10n.ru.json` + `vscode.l10n.t()` for the extension host, and
+  `webview/i18n.ts` for strings that live inside a webview (the host stamps the display language on
+  `<body data-locale>`). `npm run check:l10n` reports missing and unused keys.
+- **New**: Russian variants of all 23 diagram templates (`src/templatesRu.ts`). Mermaid's grammar
+  rejects non-ASCII in a few positions, so `requirement` names, `sankey` nodes and git branch names
+  stay Latin, and `xychart` axis labels / `architecture` `[labels]` are quoted. Every Russian body is
+  covered by `npm run verify:roundtrip` alongside the English one.
+- **Change**: the drawing editor's toolbar, arrow names and shape captions are no longer
+  Traditional Chinese only. The captions are the extension's own table now — the library's
+  `shapeMeta().label` is zh-TW with no translation hook.
+- **Change**: `snippets/*.json` is generated in Russian. `contributes.snippets` takes one fixed path
+  with no locale switch, so the shipped snippets can only be one language; `SNIPPET_LOCALE=en npm run
+  gen:snippets` regenerates the English set. The **Insert Diagram Template** command is unaffected —
+  it follows the editor's language at runtime.
+- **Fix**: outline anchors in the full-document Markdown preview dropped every Cyrillic character
+  (the slug filter was `\w` plus a CJK range, and `\w` is ASCII-only), so Russian headings all
+  collapsed to the same `section` id. It now keeps any Unicode letter or digit.
+- Cyrillic in the hand-drawn **Sketch** look was checked, not assumed: the bundled Excalifont's cmap
+  covers the full Russian alphabet, so no font fallback is needed.
+- **Docs**: `README.ru.md`, linked from the English README.
+
 ## 0.20.1 — `<b>` was showing up in exported PNGs
 
 The live preview renders labels with `htmlLabels` on, so inline HTML like `<b>` and `<i>` becomes

@@ -32,6 +32,11 @@ import {
   type NodeShape,
   type Tool,
 } from 'react-super-mermaid/editor';
+import { initI18nFromDocument, t } from './i18n';
+
+// Must run before any string is rendered: picks the dictionary matching the
+// display language the host stamped on <body data-locale="…">.
+initI18nFromDocument();
 
 registerFlowchartAdapter();
 registerStateAdapter();
@@ -84,17 +89,82 @@ function byId<T extends HTMLElement = HTMLElement>(id: string): T | null {
 
 // 箭頭端的友善名稱(下拉選單用)。flowchart 用前 5 種;三角 / 菱形 / 鳥足為 class/er 圖種。
 const ARROW_LABEL: Record<string, string> = {
-  none: '⎯ 無箭頭',
-  arrow: '▸ 箭頭',
-  open: '⇁ 開放',
-  dot: '● 圓點',
-  cross: '✕ 交叉',
-  triangle: '▷ 三角(繼承)',
-  diamond: '◇ 空心菱(聚合)',
-  diamondFilled: '◆ 實心菱(組合)',
-  crowFootOne: '⊣ 一',
-  crowFootMany: '⪛ 多',
+  none: t('⎯ no arrow'),
+  arrow: t('▸ arrow'),
+  open: t('⇁ open'),
+  dot: t('● dot'),
+  cross: t('✕ cross'),
+  triangle: t('▷ triangle (inheritance)'),
+  diamond: t('◇ hollow diamond (aggregation)'),
+  diamondFilled: t('◆ filled diamond (composition)'),
+  crowFootOne: t('⊣ one'),
+  crowFootMany: t('⪛ many'),
 };
+
+/**
+ * Node-shape captions.
+ *
+ * react-super-mermaid's own shapeMeta().label is zh-TW only, so the editor
+ * keeps its own table; an unknown shape falls back to the library's label so a
+ * newly added shape still shows something rather than its id.
+ */
+const SHAPE_LABEL: Record<string, string> = {
+  // flowchart
+  rectangle: 'rectangle',
+  rounded: 'rounded',
+  stadium: 'stadium',
+  subroutine: 'subroutine',
+  cylinder: 'database',
+  circle: 'circle',
+  doubleCircle: 'double circle',
+  diamond: 'diamond',
+  hexagon: 'hexagon',
+  odd: 'flag',
+  trapezoid: 'trapezoid',
+  trapezoidAlt: 'trapezoid (inverted)',
+  parallelogram: 'parallelogram',
+  parallelogramAlt: 'parallelogram (left)',
+  ellipse: 'ellipse',
+  // state
+  state: 'state',
+  stateStart: 'start',
+  stateEnd: 'end',
+  fork: 'fork / join',
+  choice: 'choice',
+  // class / er / sequence
+  classBox: 'class',
+  entity: 'entity',
+  actor: 'actor',
+  participant: 'participant',
+  note: 'note',
+  // requirement
+  requirementBox: 'requirement',
+  elementBox: 'element',
+  // quadrant / xychart
+  point: 'data point',
+  xyPoint: 'data point',
+  // C4
+  c4Person: 'person',
+  c4Box: 'system',
+  c4Db: 'database',
+  c4Queue: 'queue',
+  // kanban / sankey / journey / gantt / pie / architecture / packet / git
+  kanbanCard: 'card',
+  sankeyNode: 'node',
+  journeyTask: 'task',
+  ganttBar: 'task',
+  pieSlice: 'slice',
+  archNode: 'service',
+  packetField: 'field',
+  gitCommit: 'commit',
+  passthrough: 'kept as-is',
+};
+
+/** Translated caption for a node shape. */
+function shapeLabel(shape: string, fallback: string): string {
+  const source = SHAPE_LABEL[shape];
+  return source ? t(source) : fallback;
+}
 
 /** 依目前圖種能力重建箭頭下拉的選項(保留現值)。 */
 function rebuildArrowOptions(sel: HTMLSelectElement, heads: readonly string[]): void {
@@ -157,13 +227,14 @@ function rebuildShapeButtons(caps: DiagramCapabilities | null): void {
     group.textContent = '';
     for (const shape of quick) {
       const m = shapeMeta(shape);
+      const label = shapeLabel(shape, m.label);
       const btn = document.createElement('button');
       btn.className = 'tbtn shape-btn';
       btn.setAttribute('data-shape', shape);
-      btn.title = `新增${m.label}節點`;
+      btn.title = t('Add a {0} node', label);
       // 圖示是 core 產的常數 SVG(無使用者輸入);字形縮圖在多數系統字型下畫不出來。
       btn.innerHTML = shapeIconMarkup(shape);
-      btn.appendChild(document.createTextNode(m.label));
+      btn.appendChild(document.createTextNode(label));
       group.appendChild(btn);
     }
   }
@@ -171,13 +242,13 @@ function rebuildShapeButtons(caps: DiagramCapabilities | null): void {
     sel.textContent = '';
     const head = document.createElement('option');
     head.value = '';
-    head.textContent = '＋ 更多外形…';
+    head.textContent = t('＋ more shapes…');
     sel.appendChild(head);
     for (const shape of more) {
       const m = shapeMeta(shape);
       const opt = document.createElement('option');
       opt.value = shape;
-      opt.textContent = `${m.glyph} ${m.label}`;
+      opt.textContent = `${m.glyph} ${shapeLabel(shape, m.label)}`;
       sel.appendChild(opt);
     }
     sel.dataset.hasMore = more.length ? '1' : '';
@@ -334,15 +405,15 @@ function wireToolbar(h: DiagramEditorHandle): void {
     void h
       .copyPngToClipboard()
       .then(() => {
-        copyBtn.textContent = '✓ 已複製';
+        copyBtn.textContent = t('✓ copied');
         setTimeout(() => {
-          copyBtn.textContent = '⧉ 複製';
+          copyBtn.textContent = t('⧉ copy');
         }, 1400);
       })
       .catch(() => {
-        copyBtn.textContent = '✗ 不支援';
+        copyBtn.textContent = t('✗ unsupported');
         setTimeout(() => {
-          copyBtn.textContent = '⧉ 複製';
+          copyBtn.textContent = t('⧉ copy');
         }, 1400);
       });
   });

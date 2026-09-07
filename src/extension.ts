@@ -21,7 +21,7 @@ async function resolveMarkdownDoc(uri?: vscode.Uri): Promise<vscode.TextDocument
   }
   if (!doc || !isMarkdownDoc(doc)) {
     void vscode.window.showInformationMessage(
-      'Super Mermaid: open a Markdown (.md) file first to preview it.',
+      vscode.l10n.t('Super Mermaid: open a Markdown (.md) file first to preview it.'),
     );
     return undefined;
   }
@@ -94,7 +94,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         if (!doc || !isSupportedDoc(doc)) {
           void vscode.window.showInformationMessage(
-            'Super Mermaid: 請先開啟 Markdown 或 Mermaid (.mmd) 檔案。',
+            vscode.l10n.t('Super Mermaid: open a Markdown or Mermaid (.mmd) file first.'),
           );
           return;
         }
@@ -117,8 +117,10 @@ export function activate(context: vscode.ExtensionContext): void {
         ];
         if (!DRAWABLE.includes(kw)) {
           void vscode.window.showInformationMessage(
-            `Mermaid 視覺編輯目前支援 flowchart / graph / stateDiagram / erDiagram / classDiagram / mindmap / sequenceDiagram / timeline / orid;此圖為「${block?.title ?? '未知'}」。` +
-              '其他圖種請改用「Edit Diagram」預覽。',
+            vscode.l10n.t(
+              'Visual editing currently supports flowchart / graph / stateDiagram / erDiagram / classDiagram / mindmap / sequenceDiagram / timeline / orid. This diagram is "{0}" — use "Edit Diagram" to preview the other types instead.',
+              block?.title ?? vscode.l10n.t('unknown'),
+            ),
           );
           return;
         }
@@ -137,7 +139,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       if (!doc || !isSupportedDoc(doc)) {
         void vscode.window.showInformationMessage(
-          'Super Mermaid: open a Markdown or Mermaid (.mmd) file first.',
+          vscode.l10n.t('Super Mermaid: open a Markdown or Mermaid (.mmd) file first.'),
         );
         return;
       }

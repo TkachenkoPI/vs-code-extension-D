@@ -1,7 +1,7 @@
 {
   "name": "super-mermaid",
-  "displayName": "Super Mermaid",
-  "description": "Mermaid diagrams that look good out of the box — auto-colored live preview with pan/zoom, plus one-click hi-res PNG/SVG export (up to 4x, transparent background, batch Export All).",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
   "version": "0.20.1",
   "publisher": "mark-ku",
   "license": "MIT",
@@ -18,6 +18,7 @@
   ],
   "icon": "media/logo.png",
   "main": "./dist/extension.js",
+  "l10n": "./l10n",
   "activationEvents": [
     "onLanguage:markdown",
     "onStartupFinished"
@@ -66,37 +67,37 @@
     "commands": [
       {
         "command": "superMermaid.openToSide",
-        "title": "Super Mermaid: Open Preview to the Side",
+        "title": "%command.openToSide.title%",
         "icon": "$(open-preview)"
       },
       {
         "command": "superMermaid.editDiagram",
-        "title": "Edit Diagram",
-        "category": "Super Mermaid"
+        "title": "%command.editDiagram.title%",
+        "category": "%command.category%"
       },
       {
         "command": "superMermaid.editDiagramInNewWindow",
-        "title": "Open Diagram in New Window",
-        "category": "Super Mermaid"
+        "title": "%command.editDiagramInNewWindow.title%",
+        "category": "%command.category%"
       },
       {
         "command": "superMermaid.insertTemplate",
-        "title": "Super Mermaid: Insert Diagram Template",
+        "title": "%command.insertTemplate.title%",
         "icon": "$(library)"
       },
       {
         "command": "superMermaid.openMarkdownPreview",
-        "title": "Super Mermaid: Open Markdown Preview to the Side",
+        "title": "%command.openMarkdownPreview.title%",
         "icon": "$(open-preview)"
       },
       {
         "command": "superMermaid.openMarkdownPreviewInNewWindow",
-        "title": "Super Mermaid: Open Markdown Preview in New Window",
+        "title": "%command.openMarkdownPreviewInNewWindow.title%",
         "icon": "$(multiple-windows)"
       }
     ],
     "configuration": {
-      "title": "Super Mermaid",
+      "title": "%configuration.title%",
       "properties": {
         "superMermaid.previewLocation": {
           "type": "string",
@@ -105,11 +106,11 @@
             "beside"
           ],
           "enumDescriptions": [
-            "Open the preview in a separate floating window",
-            "Open the preview beside the editor (split view)"
+            "%configuration.previewLocation.newWindow%",
+            "%configuration.previewLocation.beside%"
           ],
           "default": "beside",
-          "markdownDescription": "Where to open the Mermaid preview. `beside` opens it as a split beside the editor (same as the built-in Markdown preview); `newWindow` pops it out into its own floating window."
+          "markdownDescription": "%configuration.previewLocation.description%"
         }
       }
     },
@@ -199,6 +200,7 @@
     "build": "tsc --noEmit && node scripts/genSnippets.mjs && node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "type:check": "tsc --noEmit",
+    "check:l10n": "node scripts/extractL10n.mjs",
     "sync:lib": "node scripts/syncLib.mjs --build",
     "verify:roundtrip": "node scripts/verifyRoundtrip.mjs",
     "verify:ui": "node scripts/verifyEditorUi.mjs"

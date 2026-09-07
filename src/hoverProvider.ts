@@ -172,6 +172,88 @@ function blockAt(doc: vscode.TextDocument, line: number): MermaidBlock | undefin
 
 const SEVERITY_ICON: Record<string, string> = { info: 'ℹ️', warn: '⚠️', error: '🛑' };
 
+/** Human-readable node-shape name. The ids stay English; only the caption moves. */
+function shapeName(shape: string): string {
+  switch (shape) {
+    case 'stadium':
+      return vscode.l10n.t('stadium');
+    case 'subroutine':
+      return vscode.l10n.t('subroutine');
+    case 'database':
+      return vscode.l10n.t('database');
+    case 'circle':
+      return vscode.l10n.t('circle');
+    case 'hexagon':
+      return vscode.l10n.t('hexagon');
+    case 'parallelogram':
+      return vscode.l10n.t('parallelogram');
+    case 'asymmetric':
+      return vscode.l10n.t('asymmetric');
+    case 'rectangle':
+      return vscode.l10n.t('rectangle');
+    case 'rounded':
+      return vscode.l10n.t('rounded');
+    case 'decision':
+      return vscode.l10n.t('decision');
+    case 'state':
+      return vscode.l10n.t('state');
+    default:
+      return shape;
+  }
+}
+
+/** "N connecting statements", pluralized (see src/plural.ts for the why). */
+function connectionCount(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) {
+    return vscode.l10n.t('{0} connecting statement', count);
+  }
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return vscode.l10n.t({
+      message: '{0} connecting statements',
+      comment: ['few form (2-4), for languages with three plural forms'],
+      args: [count],
+    });
+  }
+  return vscode.l10n.t('{0} connecting statements', count);
+}
+
+/**
+ * ORID stage caption and facilitation hint.
+ *
+ * react-super-mermaid ships these in zh-TW only, so the extension keeps its own
+ * wording and lets vscode.l10n translate it.
+ */
+function oridStageText(key: string): { name: string; hint: string } {
+  switch (key) {
+    case 'objective':
+      return {
+        name: vscode.l10n.t('Objective — the facts'),
+        hint: vscode.l10n.t(
+          'What did you see or hear? Verifiable facts and figures only, no judgement.',
+        ),
+      };
+    case 'reflective':
+      return {
+        name: vscode.l10n.t('Reflective — the reactions'),
+        hint: vscode.l10n.t(
+          'Feelings, gut reactions and emotions in the moment — no need to justify them yet.',
+        ),
+      };
+    case 'interpretive':
+      return {
+        name: vscode.l10n.t('Interpretive — the meaning'),
+        hint: vscode.l10n.t('What does this mean? Root causes, insights, lessons learned.'),
+      };
+    default:
+      return {
+        name: vscode.l10n.t('Decisional — the actions'),
+        hint: vscode.l10n.t('What happens next? Who owns it and by when.'),
+      };
+  }
+}
+
 export class MermaidHoverProvider implements vscode.HoverProvider {
   public provideHover(
     doc: vscode.TextDocument,
@@ -220,10 +302,10 @@ export class MermaidHoverProvider implements vscode.HoverProvider {
     const headline = def.label && def.label !== word ? `**${def.label}** — \`${word}\`` : `**${word}**`;
     const details: string[] = [];
     if (def.shape) {
-      details.push(def.shape);
+      details.push(shapeName(def.shape));
     }
     if (connections > 0) {
-      details.push(`${connections} connecting statement${connections === 1 ? '' : 's'}`);
+      details.push(connectionCount(connections));
     }
     md.appendMarkdown(headline + (details.length ? `  \n${details.join(' · ')}` : ''));
     for (const tip of tips) {
@@ -263,10 +345,14 @@ export class MermaidHoverProvider implements vscode.HoverProvider {
     if (!spec) {
       return undefined;
     }
+    const text = oridStageText(spec.key);
     const md = new vscode.MarkdownString();
-    md.appendMarkdown(`**${spec.ordinal} ${spec.zh} · ${spec.en}**  \n${spec.hint}`);
+    md.appendMarkdown(`**${spec.ordinal} ${text.name}**  \n${text.hint}`);
     md.appendMarkdown(
-      '\n\n---\n\n項目寫在下一行並縮排。若項目本身以階段關鍵字開頭,前面加 `-` 強制當成項目。',
+      '\n\n---\n\n' +
+        vscode.l10n.t(
+          'Write items on the following lines, indented. If an item itself starts with a stage keyword, prefix it with `-` to force it to be read as an item.',
+        ),
     );
     return new vscode.Hover(md, wordRange);
   }

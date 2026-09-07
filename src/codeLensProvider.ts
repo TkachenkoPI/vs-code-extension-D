@@ -1,19 +1,20 @@
 import * as vscode from 'vscode';
+import { t } from './uiLocale';
 import { extractMermaidBlocks, isSupportedDoc } from './mermaidExtract';
 
 /** 「Draw / Edit」CodeLens 的提示文字;key 為圖種首關鍵字(小寫),default 為畫布圖種。 */
 function editTooltip(kw: string): string {
   switch (kw) {
     case 'timeline':
-      return vscode.l10n.t(
+      return t(
         'Edit this timeline in a structured form (sections / points / events, written back on change)',
       );
     case 'orid':
-      return vscode.l10n.t(
+      return t(
         'Edit this ORID focused conversation in a structured form (four stages, written back on change)',
       );
     default:
-      return vscode.l10n.t(
+      return t(
         'Open this diagram in the Excalidraw-style drawing editor (drag nodes / edges, written back on change)',
       );
   }
@@ -39,6 +40,11 @@ export class MermaidCodeLensProvider implements vscode.CodeLensProvider {
     );
   }
 
+  /** 介面語言改變 → CodeLens 標題要重新產生。 */
+  public refreshLocale(): void {
+    this.changeEmitter.fire();
+  }
+
   public provideCodeLenses(doc: vscode.TextDocument): vscode.CodeLens[] {
     if (!isSupportedDoc(doc)) {
       return [];
@@ -47,14 +53,14 @@ export class MermaidCodeLensProvider implements vscode.CodeLensProvider {
       const range = new vscode.Range(block.startLine, 0, block.startLine, 0);
       const lenses = [
         new vscode.CodeLens(range, {
-          title: `$(edit) ${vscode.l10n.t('Edit Diagram')}`,
-          tooltip: vscode.l10n.t('Open the Super Mermaid preview focused on this diagram'),
+          title: `$(edit) ${t('Edit Diagram')}`,
+          tooltip: t('Open the Super Mermaid preview focused on this diagram'),
           command: 'superMermaid.editDiagram',
           arguments: [doc.uri, index],
         }),
         new vscode.CodeLens(range, {
-          title: `$(multiple-windows) ${vscode.l10n.t('Open in New Window')}`,
-          tooltip: vscode.l10n.t(
+          title: `$(multiple-windows) ${t('Open in New Window')}`,
+          tooltip: t(
             'Open the Super Mermaid preview for this diagram in a separate floating window',
           ),
           command: 'superMermaid.editDiagramInNewWindow',
@@ -80,8 +86,8 @@ export class MermaidCodeLensProvider implements vscode.CodeLensProvider {
         lenses.push(
           new vscode.CodeLens(range, {
             title: isForm
-              ? `$(edit) ${vscode.l10n.t('Edit')}`
-              : `$(edit) ${vscode.l10n.t('Draw')}`,
+              ? `$(edit) ${t('Edit')}`
+              : `$(edit) ${t('Draw')}`,
             tooltip: editTooltip(kw),
             command: 'superMermaid.editDiagramVisually',
             arguments: [doc.uri, index],

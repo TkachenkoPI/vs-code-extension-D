@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from './uiLocale';
 import { MermaidCodeLensProvider } from './codeLensProvider';
 import { MermaidCompletionProvider } from './completionProvider';
 import { MermaidHoverProvider } from './hoverProvider';
@@ -21,7 +22,7 @@ async function resolveMarkdownDoc(uri?: vscode.Uri): Promise<vscode.TextDocument
   }
   if (!doc || !isMarkdownDoc(doc)) {
     void vscode.window.showInformationMessage(
-      vscode.l10n.t('Super Mermaid: open a Markdown (.md) file first to preview it.'),
+      t('Super Mermaid: open a Markdown (.md) file first to preview it.'),
     );
     return undefined;
   }
@@ -94,7 +95,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         if (!doc || !isSupportedDoc(doc)) {
           void vscode.window.showInformationMessage(
-            vscode.l10n.t('Super Mermaid: open a Markdown or Mermaid (.mmd) file first.'),
+            t('Super Mermaid: open a Markdown or Mermaid (.mmd) file first.'),
           );
           return;
         }
@@ -117,9 +118,9 @@ export function activate(context: vscode.ExtensionContext): void {
         ];
         if (!DRAWABLE.includes(kw)) {
           void vscode.window.showInformationMessage(
-            vscode.l10n.t(
+            t(
               'Visual editing currently supports flowchart / graph / stateDiagram / erDiagram / classDiagram / mindmap / sequenceDiagram / timeline / orid. This diagram is "{0}" — use "Edit Diagram" to preview the other types instead.',
-              block?.title ?? vscode.l10n.t('unknown'),
+              block?.title ?? t('unknown'),
             ),
           );
           return;
@@ -139,7 +140,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       if (!doc || !isSupportedDoc(doc)) {
         void vscode.window.showInformationMessage(
-          vscode.l10n.t('Super Mermaid: open a Markdown or Mermaid (.mmd) file first.'),
+          t('Super Mermaid: open a Markdown or Mermaid (.mmd) file first.'),
         );
         return;
       }
@@ -188,6 +189,18 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.workspace.onDidCloseTextDocument((doc) => {
       diagnostics.clear(doc.uri);
+    }),
+    // 介面語言(superMermaid.language)改變:面板的字串是開啟當下產生的,
+    // 全部重建一次,使用者才不用關掉再開。
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (!e.affectsConfiguration('superMermaid.language')) {
+        return;
+      }
+      codeLensProvider.refreshLocale();
+      statusBar.refreshLocale(vscode.window.activeTextEditor);
+      EditorPanel.current?.refreshLocale();
+      PreviewPanel.current?.refreshLocale();
+      MarkdownPreviewPanel.current?.refreshLocale();
     }),
   );
 }

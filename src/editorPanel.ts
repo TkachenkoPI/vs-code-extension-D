@@ -2,6 +2,7 @@
 // 編輯後把序列化的 mermaid 透過 WorkspaceEdit 精準寫回該 fence(用 startLine/endLine)。
 
 import * as vscode from 'vscode';
+import { configuredLanguage, setConfiguredLanguage, t, uiLanguage, UiLanguage } from './uiLocale';
 import { buildEditorBodyHtml } from './editorPanelHtml';
 import * as path from 'path';
 import * as os from 'os';
@@ -11,8 +12,8 @@ type ExportFormat = 'svg' | 'png';
 /** Save-dialog file-type filters. Built per call so the label follows the UI language. */
 function exportFilters(format: ExportFormat): Record<string, string[]> {
   return format === 'svg'
-    ? { [vscode.l10n.t('SVG Image')]: ['svg'] }
-    : { [vscode.l10n.t('PNG Image')]: ['png'] };
+    ? { [t('SVG Image')]: ['svg'] }
+    : { [t('PNG Image')]: ['png'] };
 }
 function decodeExportData(format: ExportFormat, data: string): Buffer {
   return format === 'svg'
@@ -25,7 +26,8 @@ type InMessage =
   | { type: 'mermaidchange'; text: string }
   | { type: 'error'; message: string }
   | { type: 'export'; format: ExportFormat; data: string; suggestedName: string }
-  | { type: 'selectBlock'; index: number };
+  | { type: 'selectBlock'; index: number }
+  | { type: 'setLanguage'; language: UiLanguage };
 
 export class EditorPanel {
   public static current: EditorPanel | undefined;
@@ -51,7 +53,7 @@ export class EditorPanel {
     }
     const panel = vscode.window.createWebviewPanel(
       EditorPanel.viewType,
-      vscode.l10n.t('Mermaid Drawing'),
+      t('Mermaid Drawing'),
       column,
       {
         enableScripts: true,
@@ -108,12 +110,15 @@ export class EditorPanel {
       this.scheduleWriteBack(msg.text);
     } else if (msg.type === 'error') {
       void vscode.window.showWarningMessage(
-        vscode.l10n.t('Mermaid Drawing: {0}', msg.message),
+        t('Mermaid Drawing: {0}', msg.message),
       );
     } else if (msg.type === 'export') {
       void this.saveExport(msg);
     } else if (msg.type === 'selectBlock') {
       this.selectBlock(msg.index);
+    } else if (msg.type === 'setLanguage') {
+      // 寫設定即可:設定變更的監聽器會把所有面板用新語言重建(見 extension.ts)。
+      void setConfiguredLanguage(msg.language);
     }
   }
 
@@ -136,7 +141,7 @@ export class EditorPanel {
     if (!uri) return;
     await vscode.workspace.fs.writeFile(uri, decodeExportData(msg.format, msg.data));
     void vscode.window.showInformationMessage(
-      vscode.l10n.t('Mermaid Drawing: exported {0}', path.basename(uri.fsPath)),
+      t('Mermaid Drawing: exported {0}', path.basename(uri.fsPath)),
     );
   }
 
@@ -146,9 +151,9 @@ export class EditorPanel {
     if (this.writeTimer) clearTimeout(this.writeTimer);
     this.writeTimer = setTimeout(() => {
       this.writeTimer = undefined;
-      const t = this.pendingText;
+      const text = this.pendingText;
       this.pendingText = undefined;
-      if (t != null) void this.writeBack(t);
+      if (text != null) void this.writeBack(text);
     }, 200);
   }
 
@@ -159,9 +164,9 @@ export class EditorPanel {
       clearTimeout(this.writeTimer);
       this.writeTimer = undefined;
     }
-    const t = this.pendingText;
+    const text = this.pendingText;
     this.pendingText = undefined;
-    if (t != null) void this.writeBack(t);
+    if (text != null) void this.writeBack(text);
   }
 
   private async writeBack(text: string): Promise<void> {
@@ -187,6 +192,14 @@ export class EditorPanel {
     }
   }
 
+  /** 介面語言改變:工具列字串是 host 產生的,只能整份 HTML 重建
+   *  (webview 重新載入後會發 ready,屆時 postLoad 會把目前這張圖放回去)。 */
+  public refreshLocale(): void {
+    this.flushWriteBack();
+    this.panel.webview.html = this.getHtml();
+    this.updateTitle();
+  }
+
   /** 文件被「外部」修改時(非本面板寫回),重新載入到編輯器。 */
   onDocumentChanged(changed: vscode.TextDocument): void {
     if (changed.uri.toString() !== this.doc.uri.toString()) return;
@@ -196,8 +209,8 @@ export class EditorPanel {
   }
 
   private updateTitle(): void {
-    const name = this.doc.fileName.split(/[\\/]/).pop() ?? vscode.l10n.t('diagram');
-    this.panel.title = vscode.l10n.t('Mermaid Drawing: {0}', name);
+    const name = this.doc.fileName.split(/[\\/]/).pop() ?? t('diagram');
+    this.panel.title = t('Mermaid Drawing: {0}', name);
   }
 
   private getHtml(): string {
@@ -213,15 +226,15 @@ export class EditorPanel {
     );
     const nonce = getNonce();
     return `<!DOCTYPE html>
-<html lang="${vscode.env.language}">
+<html lang="${uiLanguage()}">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data: blob:; font-src ${webview.cspSource} data:; connect-src ${webview.cspSource};" />
   <link rel="stylesheet" href="${styleUri}" />
-  <title>${vscode.l10n.t('Mermaid Drawing')}</title>
+  <title>${t('Mermaid Drawing')}</title>
 </head>
-<body data-locale="${vscode.env.language}" data-font-uri="${fontUri}">
-${buildEditorBodyHtml(vscode.l10n.t)}
+<body data-locale="${uiLanguage()}" data-font-uri="${fontUri}">
+${buildEditorBodyHtml(t, configuredLanguage())}
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;

@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import { t } from './uiLocale';
 
 /**
  * "N diagrams", pluralized.
@@ -12,14 +12,14 @@ export function diagramCount(count: number): string {
   const mod10 = count % 10;
   const mod100 = count % 100;
   if (mod10 === 1 && mod100 !== 11) {
-    return vscode.l10n.t('{0} diagram', count);
+    return t('{0} diagram', count);
   }
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return vscode.l10n.t({
+    return t({
       message: '{0} diagrams',
       comment: ['few form (2-4), for languages with three plural forms'],
       args: [count],
     });
   }
-  return vscode.l10n.t('{0} diagrams', count);
+  return t('{0} diagrams', count);
 }

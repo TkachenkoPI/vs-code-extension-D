@@ -3,6 +3,7 @@ import MarkdownIt from 'markdown-it';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { t, uiLanguage } from './uiLocale';
 
 type ExportFormat = 'png' | 'pdf';
 
@@ -21,8 +22,8 @@ type WebviewMessage =
 /** Save-dialog file-type filters. Built per call so the label follows the UI language. */
 function exportFilters(format: ExportFormat): Record<string, string[]> {
   return format === 'png'
-    ? { [vscode.l10n.t('PNG Image')]: ['png'] }
-    : { [vscode.l10n.t('PDF Document')]: ['pdf'] };
+    ? { [t('PNG Image')]: ['png'] }
+    : { [t('PDF Document')]: ['pdf'] };
 }
 
 /**
@@ -300,7 +301,7 @@ export class MarkdownPreviewPanel {
         break;
       case 'exportError':
         void vscode.window.showErrorMessage(
-          vscode.l10n.t('Super Mermaid: export failed — {0}', msg.message),
+          t('Super Mermaid: export failed — {0}', msg.message),
         );
         break;
       case 'previewScrolled':
@@ -378,10 +379,10 @@ export class MarkdownPreviewPanel {
       return;
     }
     await vscode.workspace.fs.writeFile(uri, decodeExportData(msg.data));
-    const openLabel = vscode.l10n.t('Open');
-    const revealLabel = vscode.l10n.t('Reveal in Explorer');
+    const openLabel = t('Open');
+    const revealLabel = t('Reveal in Explorer');
     const choice = await vscode.window.showInformationMessage(
-      vscode.l10n.t('Super Mermaid: exported {0}', path.basename(uri.fsPath)),
+      t('Super Mermaid: exported {0}', path.basename(uri.fsPath)),
       openLabel,
       revealLabel,
     );
@@ -435,6 +436,12 @@ export class MarkdownPreviewPanel {
     this.postViewState();
   }
 
+  /** 介面語言改變:HTML 內的字串由 host 產生,整份重建(webview ready 後會自行補上內容)。 */
+  public refreshLocale(): void {
+    this.panel.webview.html = this.getHtml();
+    this.updateTitle();
+  }
+
   public isPoppedOut(): boolean {
     return this.poppedOut;
   }
@@ -461,7 +468,7 @@ export class MarkdownPreviewPanel {
   }
 
   private updateTitle(): void {
-    this.panel.title = vscode.l10n.t('Preview {0}', path.basename(this.doc.fileName));
+    this.panel.title = t('Preview {0}', path.basename(this.doc.fileName));
   }
 
   private dispose(): void {
@@ -489,18 +496,17 @@ export class MarkdownPreviewPanel {
     const legacyWide = this.state.get<boolean>(LEGACY_WIDE_KEY, false);
     const rawWidth = this.state.get<string>(WIDTH_KEY, legacyWide ? 'full' : 'auto');
     const savedWidth = WIDTH_MODES.includes(rawWidth) ? rawWidth : 'auto';
-    const t = vscode.l10n.t;
     const widthLabel =
       savedWidth === 'full' ? t('Full') : savedWidth === 'reading' ? t('Reading') : t('Auto');
     return `<!DOCTYPE html>
-<html lang="${vscode.env.language}">
+<html lang="${uiLanguage()}">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} https: data: blob:; font-src ${webview.cspSource} data:; connect-src ${webview.cspSource}; frame-src 'self' data: blob:;" />
   <link rel="stylesheet" href="${styleUri}" />
   <title>${t('Markdown Preview')}</title>
 </head>
-<body data-locale="${vscode.env.language}" data-initial-theme="${savedTheme}" data-initial-zoom="${savedZoom}" data-initial-width="${savedWidth}">
+<body data-locale="${uiLanguage()}" data-initial-theme="${savedTheme}" data-initial-zoom="${savedZoom}" data-initial-width="${savedWidth}">
   <div id="md-toolbar">
     <span id="md-filename"></span>
     <span class="md-spacer"></span>

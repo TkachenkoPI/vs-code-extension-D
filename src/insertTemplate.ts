@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t, uiLanguage } from './uiLocale';
 import { blockAtPosition, isSupportedDoc } from './mermaidExtract';
 import { PreviewPanel } from './previewPanel';
 import { fencedBody, localizedBody, MermaidTemplate, TEMPLATES, TemplateCategory } from './templates';
@@ -9,15 +10,15 @@ const CATEGORY_ORDER: TemplateCategory[] = ['Core', 'Charts', 'Planning', 'Archi
 function categoryLabel(category: TemplateCategory): string {
   switch (category) {
     case 'Core':
-      return vscode.l10n.t('Core');
+      return t('Core');
     case 'Charts':
-      return vscode.l10n.t('Charts');
+      return t('Charts');
     case 'Planning':
-      return vscode.l10n.t('Planning');
+      return t('Planning');
     case 'Architecture':
-      return vscode.l10n.t('Architecture');
+      return t('Architecture');
     default:
-      return vscode.l10n.t('Other');
+      return t('Other');
   }
 }
 
@@ -33,12 +34,12 @@ function buildItems(): TemplateItem[] {
       continue;
     }
     items.push({ label: categoryLabel(category), kind: vscode.QuickPickItemKind.Separator });
-    for (const t of group) {
+    for (const tpl of group) {
       items.push({
-        label: vscode.l10n.t(t.label),
-        description: vscode.l10n.t(t.description),
-        detail: t.diagramType,
-        template: t,
+        label: t(tpl.label),
+        description: t(tpl.description),
+        detail: tpl.diagramType,
+        template: tpl,
       });
     }
   }
@@ -48,7 +49,7 @@ function buildItems(): TemplateItem[] {
 export function registerInsertTemplateCommand(context: vscode.ExtensionContext): vscode.Disposable {
   return vscode.commands.registerCommand('superMermaid.insertTemplate', async () => {
     const picked = await vscode.window.showQuickPick(buildItems(), {
-      placeHolder: vscode.l10n.t('Select a Mermaid template to insert'),
+      placeHolder: t('Select a Mermaid template to insert'),
       matchOnDescription: true,
       matchOnDetail: true,
     });
@@ -56,7 +57,7 @@ export function registerInsertTemplateCommand(context: vscode.ExtensionContext):
       return;
     }
     const template = picked.template;
-    const templateBody = localizedBody(template, vscode.env.language);
+    const templateBody = localizedBody(template, uiLanguage());
 
     let editor = vscode.window.activeTextEditor;
     if (!editor || !isSupportedDoc(editor.document)) {

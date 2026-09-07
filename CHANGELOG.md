@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased — pick the interface language in the toolbar
+
+The extension spoke whatever language VS Code's **Display Language** was set to, and nothing else.
+That is the wrong granularity for a diagram tool: people run an English VS Code and still want the
+drawing editor in Russian (and the other way round), and switching VS Code's display language means
+a restart of the whole editor.
+
+- **New**: a 🌐 dropdown at the right of the drawing editor's toolbar — **Auto / English / Русский**
+  — backed by the `superMermaid.language` setting (`auto` = follow VS Code, the default). Changing
+  it takes effect at once: the drawing editor, the diagram preview and the Markdown preview rebuild
+  their HTML (the toolbar strings are host-generated, so a rebuild is the only way), and the CodeLens
+  titles and status bar re-render.
+- **New**: `src/uiLocale.ts` — a `t()` that is call-compatible with `vscode.l10n.t` and delegates to
+  it verbatim on `auto`. With an override it looks the string up in the same `l10n/bundle.l10n.ru.json`
+  (imported, so it ends up inside `dist/extension.js`), including the keyed `message/comment` form
+  used for plurals; `en` returns the source string, which is the English original. Every
+  `vscode.l10n.t` call in `src/` goes through it now, and `npm run check:l10n` still sees them.
+- Not covered, by construction: command titles, menu entries and the settings page itself come from
+  `package.nls.*.json`, which VS Code resolves from its own display language before the extension
+  runs. Both READMEs say so.
+
 ## Unreleased — a clean clone builds again
 
 `webview/main.ts` imported `stripHtmlFormattingTags` from `react-super-mermaid/orid`, which only

@@ -99,6 +99,21 @@
     "configuration": {
       "title": "%configuration.title%",
       "properties": {
+        "superMermaid.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "ru"
+          ],
+          "enumDescriptions": [
+            "%configuration.language.auto%",
+            "%configuration.language.en%",
+            "%configuration.language.ru%"
+          ],
+          "default": "auto",
+          "markdownDescription": "%configuration.language.description%"
+        },
         "superMermaid.previewLocation": {
           "type": "string",
           "enum": [

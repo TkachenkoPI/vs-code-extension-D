@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { t, uiLanguage } from './uiLocale';
 import { deflateSync } from 'zlib';
 import { BlockError, MermaidDiagnostics } from './diagnostics';
 import { extractMermaidBlocks, isMermaidFileDoc, MermaidBlock } from './mermaidExtract';
@@ -43,13 +44,13 @@ type WebviewMessage =
 function exportFilters(format: ExportFormat): Record<string, string[]> {
   switch (format) {
     case 'svg':
-      return { [vscode.l10n.t('SVG Image')]: ['svg'] };
+      return { [t('SVG Image')]: ['svg'] };
     case 'png':
-      return { [vscode.l10n.t('PNG Image')]: ['png'] };
+      return { [t('PNG Image')]: ['png'] };
     case 'jpg':
-      return { [vscode.l10n.t('JPEG Image')]: ['jpg', 'jpeg'] };
+      return { [t('JPEG Image')]: ['jpg', 'jpeg'] };
     default:
-      return { [vscode.l10n.t('WebP Image')]: ['webp'] };
+      return { [t('WebP Image')]: ['webp'] };
   }
 }
 
@@ -294,7 +295,7 @@ export class PreviewPanel {
       case 'copyText':
         await vscode.env.clipboard.writeText(msg.text);
         void vscode.window.showInformationMessage(
-          vscode.l10n.t('Mermaid Preview: {0} — copied to clipboard', vscode.l10n.t(msg.what)),
+          t('Mermaid Preview: {0} — copied to clipboard', t(msg.what)),
         );
         break;
       case 'copyImageFallback':
@@ -341,7 +342,7 @@ export class PreviewPanel {
       canSelectFiles: false,
       canSelectMany: false,
       defaultUri: vscode.Uri.file(defaultDir),
-      openLabel: vscode.l10n.t('Export diagrams here'),
+      openLabel: t('Export diagrams here'),
     });
     if (!picked?.[0]) {
       void this.panel.webview.postMessage({ type: 'exportAllCancel' });
@@ -351,7 +352,7 @@ export class PreviewPanel {
     void vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: vscode.l10n.t('Super Mermaid: exporting diagrams'),
+        title: t('Super Mermaid: exporting diagrams'),
         cancellable: true,
       },
       (progress, token) =>
@@ -398,7 +399,7 @@ export class PreviewPanel {
     const where = pending.folder.fsPath;
     if (pending.skipped.length === 0) {
       void vscode.window.showInformationMessage(
-        vscode.l10n.t(
+        t(
           'Super Mermaid: exported {0} to {1}',
           diagramCount(pending.written),
           where,
@@ -409,7 +410,7 @@ export class PreviewPanel {
         .map((s) => `${s.label}: ${s.message.split('\n')[0]}`)
         .join('; ');
       void vscode.window.showWarningMessage(
-        vscode.l10n.t(
+        t(
           'Super Mermaid: exported {0} of {1} diagrams to {2} — skipped {3}',
           pending.written,
           pending.total,
@@ -447,12 +448,12 @@ export class PreviewPanel {
     const url = `${SHARE_BASE_URL}#pako:${encoded}`;
     const warning =
       url.length > 8000
-        ? vscode.l10n.t(' (very long link — some chat apps may truncate it)')
+        ? t(' (very long link — some chat apps may truncate it)')
         : '';
-    const openLabel = vscode.l10n.t('Open in Browser');
-    const copyLabel = vscode.l10n.t('Copy URL');
+    const openLabel = t('Open in Browser');
+    const copyLabel = t('Copy URL');
     const action = await vscode.window.showInformationMessage(
-      vscode.l10n.t('Super Mermaid: share link ready{0}', warning),
+      t('Super Mermaid: share link ready{0}', warning),
       openLabel,
       copyLabel,
     );
@@ -461,7 +462,7 @@ export class PreviewPanel {
     } else if (action === copyLabel) {
       await vscode.env.clipboard.writeText(url);
       void vscode.window.showInformationMessage(
-        vscode.l10n.t(
+        t(
           'Super Mermaid: share URL copied — it opens the diagram on an external preview page (blog.markkulab.net)',
         ),
       );
@@ -488,13 +489,13 @@ export class PreviewPanel {
       void vscode.workspace.fs.delete(tmpUri).then(undefined, () => undefined);
       if (error) {
         void vscode.window.showErrorMessage(
-          vscode.l10n.t(
+          t(
             'Super Mermaid: could not copy the image to the clipboard — use Export PNG instead.',
           ),
         );
       } else {
         void vscode.window.showInformationMessage(
-          vscode.l10n.t('Super Mermaid: image copied to clipboard'),
+          t('Super Mermaid: image copied to clipboard'),
         );
       }
     });
@@ -546,7 +547,7 @@ export class PreviewPanel {
     }
     await vscode.workspace.fs.writeFile(uri, decodeExportData(msg.format, msg.data));
     void vscode.window.showInformationMessage(
-      vscode.l10n.t('Super Mermaid: exported {0}', path.basename(uri.fsPath)),
+      t('Super Mermaid: exported {0}', path.basename(uri.fsPath)),
     );
   }
 
@@ -590,6 +591,12 @@ export class PreviewPanel {
    * 再把焦點交還原始碼編輯器並定位到這張圖的起始行,讓使用者直接改碼。
    */
   /** 預覽目前是否在獨立浮動視窗。 */
+  /** 介面語言改變:HTML 內的字串由 host 產生,整份重建(webview ready 後會自行補上內容)。 */
+  public refreshLocale(): void {
+    this.panel.webview.html = this.getHtml();
+    this.updateTitle();
+  }
+
   public isPoppedOut(): boolean {
     return this.poppedOut;
   }
@@ -649,16 +656,15 @@ export class PreviewPanel {
     // exported SVGs — external url() fonts don't survive SVG-to-canvas raster.
     const fontUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'Excalifont.woff2'));
     const nonce = getNonce();
-    const t = vscode.l10n.t;
     return `<!DOCTYPE html>
-<html lang="${vscode.env.language}">
+<html lang="${uiLanguage()}">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data: blob:; font-src ${webview.cspSource} data:; connect-src ${webview.cspSource};" />
   <link rel="stylesheet" href="${styleUri}" />
   <title>${t('Mermaid Preview')}</title>
 </head>
-<body data-locale="${vscode.env.language}" data-font-uri="${fontUri}">
+<body data-locale="${uiLanguage()}" data-font-uri="${fontUri}">
   <div id="toolbar">
     <select id="block-select" hidden title="${t('Select diagram')}"></select>
     <button id="presentation-toggle" title="${t('Presentation mode (p)')}">${ICON_PLAY}</button>

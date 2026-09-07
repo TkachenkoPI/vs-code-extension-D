@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from './uiLocale';
 import { extractMermaidBlocks, isSupportedDoc } from './mermaidExtract';
 import { diagramCount } from './plural';
 
@@ -11,7 +12,7 @@ export class MermaidStatusBar implements vscode.Disposable {
 
   public constructor() {
     this.item.command = 'superMermaid.openToSide';
-    this.item.tooltip = vscode.l10n.t('Open Super Mermaid preview');
+    this.item.tooltip = t('Open Super Mermaid preview');
   }
 
   public refresh(editor: vscode.TextEditor | undefined): void {
@@ -26,6 +27,12 @@ export class MermaidStatusBar implements vscode.Disposable {
     }
     this.item.text = `$(graph) ${diagramCount(count)}`;
     this.item.show();
+  }
+
+  /** 介面語言改變:tooltip 是建構時算的,得重算;文字走一般 refresh。 */
+  public refreshLocale(editor: vscode.TextEditor | undefined): void {
+    this.item.tooltip = t('Open Super Mermaid preview');
+    this.refresh(editor);
   }
 
   public scheduleRefresh(editor: vscode.TextEditor | undefined): void {

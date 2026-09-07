@@ -14,7 +14,32 @@ export type Translate = (message: string) => string;
 
 const identity: Translate = (message) => message;
 
-export function buildEditorBodyHtml(t: Translate = identity): string {
+/**
+ * Interface-language choices in the toolbar picker.
+ *
+ * Kept here rather than imported from uiLocale.ts on purpose: that module pulls
+ * in `vscode`, and this one must stay loadable outside the extension host.
+ * The names are written in their own language — someone looking for "Русский"
+ * on an English UI should still recognise it.
+ */
+export const UI_LANGUAGES: ReadonlyArray<{ value: string; label: string }> = [
+  { value: 'auto', label: '' }, // label comes from the translated "Auto"
+  { value: 'en', label: 'English' },
+  { value: 'ru', label: 'Русский' },
+];
+
+function languageOptions(t: Translate, current: string): string {
+  return UI_LANGUAGES.map(({ value, label }) => {
+    const selected = value === current ? ' selected' : '';
+    return `<option value="${value}"${selected}>🌐 ${label || t('Auto')}</option>`;
+  }).join('');
+}
+
+/**
+ * @param t        translator for the toolbar labels
+ * @param language current `superMermaid.language` setting (drives the picker)
+ */
+export function buildEditorBodyHtml(t: Translate = identity, language = 'auto'): string {
   return `  <div id="toolbar">
     <select id="diagram-select" class="tbtn" title="${t('Switch to another diagram in this file')}" style="display:none"></select>
     <button class="tbtn" data-tool="select" title="${t('Select / move (V)')}">➤ ${t('Select')}</button>
@@ -25,6 +50,9 @@ export function buildEditorBodyHtml(t: Translate = identity): string {
     <!-- 外形按鈕由 webview 依目前圖種的 adapter 能力生成(類別圖不該看到「菱形 / 圓柱」)。 -->
     <span id="shape-group"></span>
     <select id="shape-select" class="tbtn" title="${t('More shapes (add a node)')}"></select>
+    <!-- 介面語言:工具列字串由 host 產生,故切換語言 = 請 host 用新語言重建整份 HTML。 -->
+    <span class="spacer"></span>
+    <select id="lang-select" class="tbtn" title="${t('Interface language')}" aria-label="${t('Interface language')}">${languageOptions(t, language)}</select>
     <!-- sequence 的建立動作。以前只在右鍵選單裡,不右鍵就發現不了,序列圖因此是工具列最空的圖種。 -->
     <span id="seq-group" hidden>
       <button class="tbtn" id="btn-seq-participant" title="${t('Add a participant (rename it right away)')}">＋ ${t('Participant')}</button>

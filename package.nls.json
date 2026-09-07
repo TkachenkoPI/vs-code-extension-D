@@ -11,6 +11,10 @@
   "command.openMarkdownPreviewInNewWindow.title": "Super Mermaid: Open Markdown Preview in New Window",
 
   "configuration.title": "Super Mermaid",
+  "configuration.language.description": "Language of Super Mermaid's own interface (the drawing editor toolbar, previews and messages). `auto` follows the VS Code display language. Command titles and this settings page always follow VS Code itself.",
+  "configuration.language.auto": "Follow the VS Code display language",
+  "configuration.language.en": "English",
+  "configuration.language.ru": "Russian (Русский)",
   "configuration.previewLocation.description": "Where to open the Mermaid preview. `beside` opens it as a split beside the editor (same as the built-in Markdown preview); `newWindow` pops it out into its own floating window.",
   "configuration.previewLocation.newWindow": "Open the preview in a separate floating window",
   "configuration.previewLocation.beside": "Open the preview beside the editor (split view)"

@@ -36,6 +36,8 @@
 
    Без PowerShell: `npm run build && npm run package`, затем `code --install-extension super-mermaid-<версия>.vsix`. Тот же `.vsix` можно поставить руками: панель расширений (`Ctrl+Shift+X`) → «…» → **Install from VSIX…**.
 
+   Если расширение той же версии уже стоит, VS Code пропустит установку — добавьте `--force` (`code --install-extension super-mermaid-<версия>.vsix --force`) либо соберите с `-Bump`, чтобы версия поднялась.
+
 4. Выполните `Ctrl+Shift+P` → **Developer: Reload Window**, чтобы новая версия подхватилась.
 5. Откройте файл `.md` с блоком ```` ```mermaid ```` либо файл `.mmd` / `.mermaid` и нажмите значок предпросмотра в правом верхнем углу редактора. Настраивать больше нечего.
 
@@ -81,11 +83,12 @@ https://github.com/TkachenkoPI/vs-code-extension-D.git
 4. Собери и установи расширение: .\pack.ps1  (PowerShell, Windows).
    Если PowerShell недоступен: npm run build && npm run package,
    затем code --install-extension super-mermaid-<версия>.vsix
-5. Проверь, что расширение встало: code --list-extensions | grep -i super-mermaid
+5. Проверь, что расширение встало: code --list-extensions --show-versions
 6. Скажи мне выполнить Ctrl+Shift+P → Developer: Reload Window и напиши,
    какой файл открыть для проверки.
 
 Ничего не публикуй и не коммить — только локальная сборка и установка.
+Если npm install изменит package-lock.json — откати эту правку.
 ```
 
 Claude спросит подтверждение на `npm install`, `.\pack.ps1` и `code --install-extension` — это ожидаемо,

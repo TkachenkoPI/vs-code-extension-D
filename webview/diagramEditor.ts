@@ -32,7 +32,7 @@ import {
   type NodeShape,
   type Tool,
 } from 'react-super-mermaid/editor';
-import { initI18nFromDocument, t } from './i18n';
+import { initI18nFromDocument, t, tLib } from './i18n';
 
 // Must run before any string is rendered: picks the dictionary matching the
 // display language the host stamped on <body data-locale="…">.
@@ -85,6 +85,39 @@ function updateSourcePanel(text: string): void {
 
 function byId<T extends HTMLElement = HTMLElement>(id: string): T | null {
   return document.getElementById(id) as T | null;
+}
+
+/**
+ * Translate the pieces react-super-mermaid renders on its own.
+ *
+ * Its keyboard-help overlay and right-click menu are hard-coded zh-TW with no
+ * hook to supply other strings, so the editor rewrites their text once the
+ * library has appended them to the canvas host (see watchLibDom below).
+ */
+const LIB_TEXT_SELECTOR = '.rsm-ctx-item, .rsm-help-title, .rsm-help-grid > kbd, .rsm-help-grid > span';
+
+function localizeLibDom(root: HTMLElement): void {
+  for (const el of Array.from(root.querySelectorAll<HTMLElement>(LIB_TEXT_SELECTOR))) {
+    const translated = tLib(el.textContent ?? '');
+    if (translated !== el.textContent) el.textContent = translated;
+  }
+  // 外形列的說明只出現在 tooltip,textContent 是字形本身,不能動。
+  for (const btn of Array.from(root.querySelectorAll<HTMLElement>('.rsm-ctx-shapes button[title]'))) {
+    const translated = tLib(btn.title);
+    if (translated !== btn.title) btn.title = translated;
+  }
+}
+
+/** 選單 / 說明是使用時才建立的,所以用 observer 在它們掛上畫布的當下就翻好。 */
+function watchLibDom(host: HTMLElement): void {
+  const observer = new MutationObserver((records) => {
+    for (const rec of records) {
+      for (const added of Array.from(rec.addedNodes)) {
+        if (added instanceof HTMLElement) localizeLibDom(added);
+      }
+    }
+  });
+  observer.observe(host, { childList: true, subtree: true });
 }
 
 // 箭頭端的友善名稱(下拉選單用)。flowchart 用前 5 種;三角 / 菱形 / 鳥足為 class/er 圖種。
@@ -494,6 +527,7 @@ window.addEventListener('message', (event) => {
         fontUrl: fontUri,
         look: 'clean',
       });
+      watchLibDom(app);
       handle.on('mermaidchange', (text) => {
         updateSourcePanel(text as string); // 即時更新原始碼面板(載入期間也更新)
         if (suppressWriteBack) return;
@@ -521,6 +555,15 @@ window.addEventListener('message', (event) => {
   } else if (msg.type === 'theme') {
     handle?.setDark(Boolean(msg.dark));
   }
+});
+
+// 介面語言下拉:工具列字串由 host 產生,所以只把選擇送回去,由 host 寫設定並重建整份 HTML。
+// 刻意不放在 wireToolbar 裡 —— 那要等圖載入成功才會執行,而語言在圖壞掉時更需要能切。
+byId<HTMLSelectElement>('lang-select')?.addEventListener('change', (e) => {
+  vscodeApi.postMessage({
+    type: 'setLanguage',
+    language: (e.target as HTMLSelectElement).value,
+  });
 });
 
 vscodeApi.postMessage({ type: 'ready' });

@@ -17,6 +17,13 @@ a restart of the whole editor.
   (imported, so it ends up inside `dist/extension.js`), including the keyed `message/comment` form
   used for plurals; `en` returns the source string, which is the English original. Every
   `vscode.l10n.t` call in `src/` goes through it now, and `npm run check:l10n` still sees them.
+- **Fixed**: the drawing editor's keyboard-help overlay (`?`) and its right-click menus stayed in
+  zh-TW whatever the language was. Those strings are hard-coded inside react-super-mermaid with no
+  hook to replace them, so the webview now translates their DOM as the library appends it: a zh-TW →
+  English map in `webview/i18n.ts` feeds the existing dictionary, which means a locale without a
+  translation lands on English instead of Chinese. Covers all 68 strings of the help overlay and of
+  every context menu (canvas, node, edge, sequence, gitgraph, kanban / journey, requirement),
+  including the shape-strip and colour-swatch tooltips.
 - Not covered, by construction: command titles, menu entries and the settings page itself come from
   `package.nls.*.json`, which VS Code resolves from its own display language before the extension
   runs. Both READMEs say so.
